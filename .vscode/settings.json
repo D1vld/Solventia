@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Proyect360.sln"
+    "dotnet.defaultSolution": "Solventia.sln"
 }
