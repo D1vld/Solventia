@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 2
+  tags:
+  - Anchor
+  - Next
+  - Previous
+  - KeyboardInteractorAnchorLeft
+  - KeyboardInteractorAnchorRight
+  - LeftHand
+  - KeyboardController
+  - RightHand
+  - imagen
+  - RightControllerAnchor
+  - Texto
+  - TextChatPrefab
+  - LeftControllerAnchor
+  - Off
+  - 360
+  - 180
+  - animacion
+  - UI
+  - UI_Keyboard
+  - Virtual_Key
+  - Micro1
+  - Micro2
+  - Chat
+  - 3D
+  - BoxCollider
+  - SphereCollider
+  - Menu
+  - PinHotel
+  - Panoramicas
+  - VideoPlayer
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0

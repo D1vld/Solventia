@@ -1,0 +1,226 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2648071505184801494
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6127243300998912064}
+  - component: {fileID: 994740731729069235}
+  - component: {fileID: 392208960988528414}
+  m_Layer: 0
+  m_Name: UI_ACont_CarruselModular
+  m_TagString: Panoramicas
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6127243300998912064
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2648071505184801494}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7477687628970517653}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &994740731729069235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2648071505184801494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8e011975b0ff7d41b0616a1a2a8898d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &392208960988528414
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2648071505184801494}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627597a2c76b16142a846f4b5e9ca8ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!1001 &4803998941219914509
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6127243300998912064}
+    m_Modifications:
+    - target: {fileID: 505045180028908671, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: activePrefab
+      value: 
+      objectReference: {fileID: 2648071505184801494}
+    - target: {fileID: 1320428828793778022, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: uiToRemove
+      value: 
+      objectReference: {fileID: 2648071505184801494}
+    - target: {fileID: 1617329558148883551, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.000000007450581
+      objectReference: {fileID: 0}
+    - target: {fileID: 2684182317048998893, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_Name
+      value: UI_CarruselFoto_Modular
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2724201471407746246, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3339932701846281051, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4756129619825192691, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.000000007450581
+      objectReference: {fileID: 0}
+    - target: {fileID: 5524849623896737049, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_fontColor.b
+      value: 0.59607846
+      objectReference: {fileID: 0}
+    - target: {fileID: 5524849623896737049, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_fontColor.g
+      value: 0.59607846
+      objectReference: {fileID: 0}
+    - target: {fileID: 5524849623896737049, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_fontColor.r
+      value: 0.59607846
+      objectReference: {fileID: 0}
+    - target: {fileID: 5524849623896737049, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_fontColor32.rgba
+      value: 4288190616
+      objectReference: {fileID: 0}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: newHotelName
+      value: 'Abora Continental by lopesan Hotels '
+      objectReference: {fileID: 0}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: textos.Array.data[3]
+      value: Terraza
+      objectReference: {fileID: 0}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: textos.Array.data[4]
+      value: Piscina
+      objectReference: {fileID: 0}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: textos.Array.data[5]
+      value: Piscina 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: textos.Array.data[6]
+      value: Restaurante
+      objectReference: {fileID: 0}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[0]
+      value: 
+      objectReference: {fileID: 21300000, guid: 3e74324676ac57f4f93a5e7d2a475501, type: 3}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[1]
+      value: 
+      objectReference: {fileID: 21300000, guid: 66737223a8e969c43876d4e602f7ef55, type: 3}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[2]
+      value: 
+      objectReference: {fileID: 21300000, guid: 191d54ce39ddf1f408cb6a04fb5538b2, type: 3}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[3]
+      value: 
+      objectReference: {fileID: 21300000, guid: a14f9e22a7ce15b43a5d7cc51eacee83, type: 3}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[4]
+      value: 
+      objectReference: {fileID: 21300000, guid: 8c6a54362f145004c985a10ad20dae72, type: 3}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[5]
+      value: 
+      objectReference: {fileID: 21300000, guid: 06a65f43f94fac7468aa559021d34e15, type: 3}
+    - target: {fileID: 7024084544339951534, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: imagenes.Array.data[6]
+      value: 
+      objectReference: {fileID: 21300000, guid: 35e6b0aa38565a94bb5d62b827810661, type: 3}
+    - target: {fileID: 8498338732973182751, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8498338732973182751, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8498338732973182751, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8498338732973182751, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+--- !u!4 &7477687628970517653 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2696863232061794200, guid: f62918a3fc167fa41bb250c37c3206ff, type: 3}
+  m_PrefabInstance: {fileID: 4803998941219914509}
+  m_PrefabAsset: {fileID: 0}

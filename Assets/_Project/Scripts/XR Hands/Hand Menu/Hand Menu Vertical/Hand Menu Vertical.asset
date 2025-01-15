@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4558d46b88554aaeb46accd190e5d137, type: 3}
+  m_Name: Hand Menu Vertical
+  m_EditorClassIdentifier: 
+  _Items:
+  - Name: Orbitar
+    Icon: {fileID: 3286163911610860551, guid: 1fd193b006d0ede4ebab774e872261d9, type: 3}
+  - Name: Agente Virtual
+    Icon: {fileID: 3286163911610860551, guid: 9a72283d91e1d23459500914de3eaac5, type: 3}
+  - Name: Agente Humano
+    Icon: {fileID: 3286163911610860551, guid: 56fe399647912ba4aaf8166575328b36, type: 3}
+  - Name: Favoritos
+    Icon: {fileID: 3286163911610860551, guid: be70a74795f244b45bf32c85fe206cad, type: 3}
+  - Name: Calendario
+    Icon: {fileID: 3286163911610860551, guid: b4ef0aecc22ed7e4cb263b4d47be5f39, type: 3}
+  - Name: Historial
+    Icon: {fileID: 3286163911610860551, guid: 0be7b0ccbc5c2774dae91770a8c9f1a7, type: 3}
