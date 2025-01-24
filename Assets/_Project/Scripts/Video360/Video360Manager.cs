@@ -10,6 +10,9 @@ public class Video360Manager : MonoBehaviour
     [Header("Lista de Videos")]
     [SerializeField] private List<VideoClip> videoClips = new List<VideoClip>();
 
+    [SerializeField] private GameObject gameObjectToActivate;
+    [SerializeField] private GameObject gameObjectToDesactivate;
+
     private int currentVideoIndex = 0;
 
     private void Start()
@@ -29,7 +32,7 @@ public class Video360Manager : MonoBehaviour
             // Reproducimos el primer video al iniciar
             currentVideoIndex = 0;
             videoPlayer.clip = videoClips[currentVideoIndex];
-            videoPlayer.Play();
+            //videoPlayer.Play();
         }
         else
         {
@@ -42,9 +45,20 @@ public class Video360Manager : MonoBehaviour
     /// </summary>
     private void OnVideoEnd(VideoPlayer vp)
     {
-        // Saltamos al siguiente video cuando termina el actual
-        NextVideo();
+        // Activa el GameObject
+        if (gameObjectToActivate != null)
+        {
+            gameObjectToActivate.SetActive(true);
+        }
+        if (gameObjectToDesactivate != null)
+        {
+            gameObjectToDesactivate.SetActive(false);
+        }
+    
+        // Salta al siguiente video
+        // NextVideo();
     }
+
 
     /// <summary>
     /// Reproduce el siguiente video de la lista, y si llegamos al final, reinicia desde el principio.
