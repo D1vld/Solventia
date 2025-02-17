@@ -6,8 +6,8 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Project/Scenes/ddd.unity
-    guid: 3eb673e3f56cdd7428ba0eb98d6603fa
+    path: Assets/_Project/Scenes/solventia.unity
+    guid: 3fda1ae6e51dd19468f532ab25f3afae
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 5237db3d22bad374cb0d7eb9a68eb6e5, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: 9de7b074205a89e4cb7ee93aa95e1629, type: 2}

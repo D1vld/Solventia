@@ -9,7 +9,7 @@ public class QuestUserPresence : MonoBehaviour
     [Header("Video a Pausar/Reanudar")]
     public VideoPlayer videoPlayer;
 
-    [Header("Permite reproducir el video al montar el visor")]
+    [Header("Permite reproducir el video al usar el visor")]
     public bool canPlayVideo = false;
 
     void OnEnable()
