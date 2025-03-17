@@ -14,20 +14,25 @@ public class Video360Manager : MonoBehaviour
     [SerializeField] private VideoPlayer videoPlayer;
 
     [Header("Carpeta local de los videos 360")]
-    [Tooltip("Ruta de la carpeta local donde se encuentran los videos 360. Ejemplo en Android: /storage/emulated/0/Movies/360Videos")]
     [SerializeField] private string folderPath = "/storage/emulated/0/Movies/360Videos";
 
-    [Header("GameObjects generales")]
-    [SerializeField] private GameObject gameObjectToActivate;
-    [SerializeField] private GameObject gameObjectToDesactivate;
+    [Header("Opciones de Video")]
+    [SerializeField] private bool playFirstVideo = true;
+
+    [Header("GameObjects a Activar/Desactivar por Idioma")]
+    [SerializeField] private GameObject gameObjectToActivateES;
+    [SerializeField] private GameObject gameObjectToActivateEN;
+    [SerializeField] private GameObject gameObjectToDesactivateES;
+    [SerializeField] private GameObject gameObjectToDesactivateEN;
+
 
     [Header("Paneles Interactables (Duplicados)")]
-    [SerializeField] private GameObject panelInteractableES; // Panel en Español
-    [SerializeField] private GameObject panelInteractableEN; // Panel en Inglés
+    [SerializeField] private GameObject panelInteractableES;
+    [SerializeField] private GameObject panelInteractableEN;
 
     [Header("Menús Bajo (Duplicados)")]
-    [SerializeField] private GameObject menuBajoES; // Menú en Español
-    [SerializeField] private GameObject menuBajoEN; // Menú en Inglés
+    [SerializeField] private GameObject menuBajoES;
+    [SerializeField] private GameObject menuBajoEN;
 
     [Header("Material del Skybox (Video 360)")]
     [SerializeField] private Material materialSkyboxVideo;
@@ -36,17 +41,13 @@ public class Video360Manager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI textMeshPro;
 
     [Header("Idioma")]
-    [Tooltip("true = Español, false = Inglés")]
     [SerializeField] private bool isSpanish = true;
 
     #endregion
 
     #region Private Fields
 
-    // Índice del video actual.
     private int currentVideoIndex = 0;
-
-    // Lista de rutas para los videos de la carpeta.
     private List<string> videoPaths = new List<string>();
 
     #endregion
@@ -55,37 +56,28 @@ public class Video360Manager : MonoBehaviour
 
     private void Start()
     {
-        // Si no se asignó el VideoPlayer en el inspector, se busca en el GameObject.
         if (videoPlayer == null)
             videoPlayer = GetComponent<VideoPlayer>();
 
-        // Desactiva Play On Awake en el VideoPlayer (también se puede hacer desde el Inspector)
         videoPlayer.playOnAwake = false;
 
-        // Configuramos el tint inicial del Skybox.
         if (materialSkyboxVideo != null)
             SetSkyboxTintColor("#808080");
 
-        // Cargamos los videos de la carpeta.
         LoadAndSortVideos();
-        if (videoPaths.Count > 0)
-        {
+
+        if (videoPaths.Count >= 2)
+            currentVideoIndex = playFirstVideo ? 0 : 1;
+        else if (videoPaths.Count == 1)
             currentVideoIndex = 0;
-            PrepareCurrentVideo();
-        }
-        else
-        {
-            Debug.LogWarning("No se encontraron archivos .mp4 en la carpeta especificada.");
-        }
+
+        //PrepareCurrentVideo();
     }
 
     #endregion
 
     #region Gestión de Videos (Modo Carpeta)
 
-    /// <summary>
-    /// Carga y ordena los videos encontrados en la carpeta especificada.
-    /// </summary>
     private void LoadAndSortVideos()
     {
         if (!Directory.Exists(folderPath))
@@ -109,10 +101,6 @@ public class Video360Manager : MonoBehaviour
         Debug.Log("Archivos encontrados: " + files.Length);
     }
 
-    /// <summary>
-    /// Extrae el número inicial del nombre del archivo para ordenar.
-    /// Ejemplo: "1_VideoEntrada" devolverá 1.
-    /// </summary>
     private int ExtractLeadingNumber(string fileName)
     {
         var parts = fileName.Split('_');
@@ -121,73 +109,86 @@ public class Video360Manager : MonoBehaviour
         return int.MaxValue;
     }
 
-    /// <summary>
-    /// Prepara el video actual sin reproducirlo.
-    /// </summary>
     private void PrepareCurrentVideo()
     {
         if (videoPaths.Count == 0 || videoPlayer == null)
             return;
 
         string videoUrl = videoPaths[currentVideoIndex];
+
         if (string.IsNullOrEmpty(videoUrl))
         {
             Debug.LogError("El path del video es NULL o vacío.");
             return;
         }
 
-        // Evitamos múltiples suscripciones eliminando primero el posible handler anterior.
+        videoPlayer.prepareCompleted -= OnVideoPrepared;
+        videoPlayer.prepareCompleted += OnVideoPrepared;
+
         videoPlayer.loopPointReached -= OnFolderVideoEnd;
         videoPlayer.loopPointReached += OnFolderVideoEnd;
 
         videoPlayer.url = videoUrl;
         videoPlayer.Prepare();
-        videoPlayer.prepareCompleted += OnVideoPrepared;
 
         Debug.Log("Preparando video: " + Path.GetFileName(videoUrl));
+
+        StartCoroutine(CheckAndRetryVideoStartCoroutine());
     }
 
-    /// <summary>
-    /// Callback que se dispara cuando el video ha sido preparado.
-    /// </summary>
     private void OnVideoPrepared(VideoPlayer vp)
     {
-        Debug.Log("Video preparado: " + Path.GetFileName(vp.url));
-        // Puedes eliminar el handler si ya no es necesario:
-        vp.prepareCompleted -= OnVideoPrepared;
+        vp.Play();
+        Debug.Log("Video preparado y reproduciendo: " + Path.GetFileName(vp.url));
     }
 
-    /// <summary>
-    /// Evento que se dispara cuando finaliza la reproducción de un video en modo carpeta.
-    /// </summary>
-    private void OnFolderVideoEnd(VideoPlayer vp)
+private void OnFolderVideoEnd(VideoPlayer vp)
+{
+    StopVideo();
+
+    if (!playFirstVideo)
     {
-        NextVideo();
+        if (isSpanish)
+        {
+            if (gameObjectToActivateES != null) gameObjectToActivateES.SetActive(true);
+            if (gameObjectToDesactivateES != null) gameObjectToDesactivateES.SetActive(false);
+        }
+        else
+        {
+            if (gameObjectToActivateEN != null) gameObjectToActivateEN.SetActive(true);
+            if (gameObjectToDesactivateEN != null) gameObjectToDesactivateEN.SetActive(false);
+        }
+    }
+}
+
+
+
+    private IEnumerator CheckAndRetryVideoStartCoroutine()
+    {
+        yield return new WaitForSeconds(2f);
+
+        if (!videoPlayer.isPlaying)
+        {
+            Debug.LogWarning("El video no comenzó tras 2 segundos. Reintentando...");
+            PrepareCurrentVideo();
+        }
     }
 
     #endregion
 
     #region Métodos de Reproducción
 
-    /// <summary>
-    /// Reproduce el siguiente video.
-    /// </summary>
     private void NextVideo()
     {
-        currentVideoIndex++;
-        if (currentVideoIndex >= videoPaths.Count)
-            currentVideoIndex = 0;
+        currentVideoIndex = (currentVideoIndex + 1) % videoPaths.Count;
         PrepareCurrentVideo();
     }
 
-    /// <summary>
-    /// Reproduce el video según el índice especificado.
-    /// </summary>
     public void PlayVideoByIndex(int index)
     {
         if (index < 0 || index >= videoPaths.Count)
         {
-            Debug.LogWarning("Índice fuera de rango para videos en carpeta.");
+            Debug.LogWarning("Índice fuera de rango.");
             return;
         }
 
@@ -199,44 +200,40 @@ public class Video360Manager : MonoBehaviour
 
     #region Métodos de Control y UI
 
-    /// <summary>
-    /// Reanuda la reproducción del video, restablece el tint a gris (#808080) y restablece el skybox de la cámara.
-    /// También muestra el menú correspondiente al idioma seleccionado.
-    /// </summary>
     public void ResumeVideo()
     {
-        if (videoPlayer != null)
-        {
-            // Si el video ya está preparado, se reproduce.
-            if (videoPlayer.isPrepared)
-                videoPlayer.Play();
-            else
-                Debug.LogWarning("El video aún no está preparado.");
-        }
+        if (videoPlayer != null && videoPlayer.isPrepared)
+            videoPlayer.Play();
 
-        // Revertir la configuración de la cámara para usar el Skybox.
         RevertCameraToSkybox();
 
         if (panelInteractableES != null) panelInteractableES.SetActive(false);
         if (panelInteractableEN != null) panelInteractableEN.SetActive(false);
 
-        if (isSpanish)
-        {
-            if (menuBajoES != null) menuBajoES.SetActive(true);
-            if (menuBajoEN != null) menuBajoEN.SetActive(false);
-        }
-        else
+        // Si playFirstVideo es falso, se desactivan ambos menús bajos
+        if (!playFirstVideo)
         {
             if (menuBajoES != null) menuBajoES.SetActive(false);
-            if (menuBajoEN != null) menuBajoEN.SetActive(true);
+            if (menuBajoEN != null) menuBajoEN.SetActive(false);
+        }
+        else // si playFirstVideo es true, activa según idioma
+        {
+            if (isSpanish)
+            {
+                if (menuBajoES != null) menuBajoES.SetActive(true);
+                if (menuBajoEN != null) menuBajoEN.SetActive(false);
+            }
+            else
+            {
+                if (menuBajoES != null) menuBajoES.SetActive(false);
+                if (menuBajoEN != null) menuBajoEN.SetActive(true);
+            }
         }
 
         SetSkyboxTintColor("#808080");
     }
 
-    /// <summary>
-    /// Detiene la reproducción del video, pone la vista en negro, cambia la cámara a modo Solid Color y muestra el panel interactable según el idioma.
-    /// </summary>
+
     public void StopVideo()
     {
         if (videoPlayer != null)
@@ -259,23 +256,15 @@ public class Video360Manager : MonoBehaviour
             if (panelInteractableEN != null) panelInteractableEN.SetActive(true);
         }
 
-        // Cambiar la cámara a modo solid color cuando se pausa el video
-        SetCameraToSolidColor("#000000");
-        
+        SetCameraToSolidColor("#000000");        
     }
 
-    /// <summary>
-    /// Salta a un tiempo específico del video.
-    /// </summary>
     public void VideoSkipTime(int time)
     {
         if (videoPlayer != null)
             videoPlayer.time = time;
     }
 
-    /// <summary>
-    /// Detiene el video después de una cantidad de segundos especificada.
-    /// </summary>
     public void StopVideoAfterSeconds(float seconds)
     {
         StartCoroutine(StopAfterSecondsCoroutine(seconds));
@@ -285,95 +274,65 @@ public class Video360Manager : MonoBehaviour
     {
         yield return new WaitForSeconds(seconds);
         StopVideo();
-        Debug.Log("Se ha detenido el video tras " + seconds + " segundos, mostrando fondo negro.");
+        Debug.Log("Video detenido tras " + seconds + " segundos.");
     }
 
-    /// <summary>
-    /// Muestra en pantalla el texto que se pase por parámetro en el TextMeshPro.
-    /// </summary>
     public void MostrarTextoEnTMP(string texto)
     {
         if (textMeshPro == null)
-        {
-            Debug.LogWarning("TextMeshPro no está asignado en el inspector.");
             return;
-        }
 
         textMeshPro.text = texto;
         if (!textMeshPro.gameObject.activeSelf)
             textMeshPro.gameObject.SetActive(true);
     }
 
-    /// <summary>
-    /// Alterna el idioma entre Español e Inglés.
-    /// </summary>
     public void ToggleLanguage()
     {
         isSpanish = !isSpanish;
-        Debug.Log("Idioma cambiado. Ahora isSpanish = " + isSpanish);
     }
 
     public void SetLanguage(bool value)
     {
         isSpanish = value;
-        Debug.Log("Idioma establecido directamente a isSpanish = " + value);
     }
+
+    public void SetVideoOption(bool option)
+    {
+        playFirstVideo = option;
+        currentVideoIndex = playFirstVideo ? 0 : 1;
+        PrepareCurrentVideo();
+    }
+
     #endregion
 
-    #region Métodos de Skybox y Cámara
+    #region Métodos Skybox y Cámara
 
-    /// <summary>
-    /// Cambia el tint del material del Skybox a partir de un valor Hex (#RRGGBB).
-    /// </summary>
     private void SetSkyboxTintColor(string hexColor)
     {
-        if (materialSkyboxVideo == null)
-            return;
-
+        if (materialSkyboxVideo == null) return;
         if (ColorUtility.TryParseHtmlString(hexColor, out Color color))
             materialSkyboxVideo.SetColor("_Tint", color);
-        else
-            Debug.LogWarning("No se ha podido parsear el color con el código: " + hexColor);
     }
 
-    /// <summary>
-    /// Configura la cámara principal para que utilice un fondo de color sólido.
-    /// </summary>
     public void SetCameraToSolidColor(string hexColor)
     {
         Camera mainCamera = Camera.main;
-        if (mainCamera == null)
-        {
-            Debug.LogWarning("No se encontró la cámara principal.");
-            return;
-        }
+        if (mainCamera == null) return;
 
         mainCamera.clearFlags = CameraClearFlags.SolidColor;
         if (ColorUtility.TryParseHtmlString(hexColor, out Color color))
         {
-            // Forzamos la opacidad a 0 para que el fondo sea completamente transparente
             color.a = 0f;
             mainCamera.backgroundColor = color;
         }
-        else
-        {
-            Debug.LogWarning("No se pudo parsear el color con el código: " + hexColor);
-        }
     }
 
-    /// <summary>
-    /// Restaura la configuración de la cámara principal para usar el Skybox.
-    /// </summary>
     public void RevertCameraToSkybox()
     {
         Camera mainCamera = Camera.main;
-        if (mainCamera == null)
-        {
-            Debug.LogWarning("No se encontró la cámara principal.");
-            return;
-        }
-
-        mainCamera.clearFlags = CameraClearFlags.Skybox;
+        if (mainCamera != null)
+            mainCamera.clearFlags = CameraClearFlags.Skybox;
     }
 
     #endregion
