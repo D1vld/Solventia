@@ -43,6 +43,82 @@ public class Video360Manager : MonoBehaviour
     [Header("Idioma")]
     [SerializeField] private bool isSpanish = true;
 
+    // Array de tiempos (en segundos) para cada estancia (28 elementos)
+    private float[] tiempos = new float[]
+    {
+        0.06f, 1.18f, 1.55f, 2.20f, 2.27f, 2.48f, 3.03f, 3.10f, 3.15f, 3.21f,
+        3.27f, 3.37f, 3.51f, 4.00f, 4.13f, 4.20f, 4.27f, 4.36f, 4.43f, 4.50f,
+        5.04f, 5.10f, 5.17f, 5.26f, 5.40f, 5.44f, 5.53f, 6.20f
+    };
+
+    // Array de nombres en ingles (28 elementos)
+    private string[] nombresEN = new string[]
+    {
+        "Semi-Olympic Pool & Hydrothermal Pool",
+        "Fitness & Weight Training Room",
+        "Calisthenics & Box Area",
+        "OCR Circuit",
+        "Padel Court",
+        "Fight Club",
+        "CROSSFIT / HYROX",
+        "Pilates Equipment Studio",
+        "Pole Dance Studio",
+        "Mind-Body Activities Studio",
+        "Indoor Group Exercise Studio",
+        "Outdoor Group Exercise Area",
+        "Spinning & Elliptical Fit Studio",
+        "Hittbox Studio",
+        "Personal Training Studio",
+        "Tennis: Clay Court",
+        "Tennis:Fast Court",
+        "Kids’ Playroom",
+        "3x3 Basketball Court",
+        "Football Pitch",
+        "Pool Changing Rooms",
+        "Studios’ Changing Rooms",
+        "Coworking Area",
+        "“Sparty” Birthday Party Zone",
+        "Cafeteria",
+        "Nutrition Shop",
+        "Physiotherapy Clinic",
+        "Artworks by Daniel Rodríguez Báez"
+    };
+
+    // Array de nombres en español (28 elementos)
+    private string[] nombresES = new string[]
+    {
+        "Piscina Semiolímpica y Piscina Hidrotermal",
+        "Sala Fitness/Musculación",
+        "Calistenia y Box Area",
+        "Circuito OCR",
+        "Pista de Pádel",
+        "Fight Club (Boxing y Dojo)",
+        "CrossFit / Hyrox",
+        "Sala Pilates Máquina",
+        "Sala Pole Dance",
+        "Sala Actividades Cuerpo/Mente",
+        "Sala Actividades Dirigidas Indoor",
+        "Sala Actividades Dirigidas Outdoor",
+        "Sala Spinning y Elíptica Fit",
+        "Sala HITTBOX",
+        "Sala Entrenamiento Personal",
+        "Tenis: Tierra Batida",
+        "Tenis: Pista Rápida",
+        "Ludoteca",
+        "Basket 3x3",
+        "Campo de Fútbol",
+        "Vestuarios de Piscina",
+        "Vestuarios de Salas",
+        "Zona Coworking",
+        "Zona Cumpleaños Sparty",
+        "Cafetería",
+        "Tienda Nutrición",
+        "Clínica Fisioterapia",
+        "Obras de Arte (Artista Daniel Rodríguez Báez)"
+    };
+
+    private Coroutine cambioTextoCoroutine;
+
     #endregion
 
     #region Private Fields
@@ -287,6 +363,7 @@ private void OnFolderVideoEnd(VideoPlayer vp)
             textMeshPro.gameObject.SetActive(true);
     }
 
+
     public void ToggleLanguage()
     {
         isSpanish = !isSpanish;
@@ -336,4 +413,46 @@ private void OnFolderVideoEnd(VideoPlayer vp)
     }
 
     #endregion
+
+
+    /////// IGG
+    ///
+    public void IniciarCambioTexto()
+    {
+        // Si ya hay una coroutine en ejecución, se detiene primero
+        if (cambioTextoCoroutine != null)
+        {
+            StopCoroutine(cambioTextoCoroutine);
+            cambioTextoCoroutine = null;
+        }
+
+        // Reiniciamos el texto
+        textMeshPro.text = "";
+        textMeshPro.gameObject.SetActive(true);
+
+        // Seleccionamos el array de nombres según el idioma
+        string[] nombresSeleccionados = isSpanish ? nombresES : nombresEN;
+
+        // Iniciamos la coroutine que se encargará de actualizar el texto
+        cambioTextoCoroutine = StartCoroutine(CambiarTextoCoroutine(tiempos, nombresSeleccionados));
+    }
+
+    private IEnumerator CambiarTextoCoroutine(float[] tiempos, string[] nombres)
+    {
+        float tiempoAnterior = 0f;
+
+        for (int i = 0; i < tiempos.Length; i++)
+        {
+            // Calculamos el tiempo a esperar respecto al cambio anterior.
+            float esperar = tiempos[i] - tiempoAnterior;
+            if (esperar > 0)
+                yield return new WaitForSeconds(esperar);
+
+            // Actualizamos el texto utilizando el método existente.
+            MostrarTextoEnTMP(nombres[i]);
+
+            // Actualizamos el tiempoAnterior para el siguiente ciclo.
+            tiempoAnterior = tiempos[i];
+        }
+    }
 }
