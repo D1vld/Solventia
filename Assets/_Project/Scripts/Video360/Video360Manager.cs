@@ -46,9 +46,34 @@ public class Video360Manager : MonoBehaviour
     // Array de tiempos (en segundos) para cada estancia (28 elementos)
     private float[] tiempos = new float[]
     {
-        0.06f, 1.18f, 1.55f, 2.20f, 2.27f, 2.48f, 3.03f, 3.10f, 3.15f, 3.21f,
-        3.27f, 3.37f, 3.51f, 4.00f, 4.13f, 4.20f, 4.27f, 4.36f, 4.43f, 4.50f,
-        5.04f, 5.10f, 5.17f, 5.26f, 5.40f, 5.44f, 5.53f, 6.20f
+        1f,   // piscina
+        6.7f, //musculo
+        78f,  //calistenia
+        116f, //ocr
+        140.5f, //padel
+        148.5f, //dojo
+        168f, //crossfit
+        183f, //pilate
+        190f, //pole
+        195.8f, //cuerpo
+        202f, //indoor
+        208f, //outdoor
+        217f, //spinnig
+        231f, //hiitarea
+        241f, //personal
+        253f, //tierra
+        261.3f, //rapida
+        268f, //ludoteca
+        276.5f, //baloncesto
+        284f, //futboll
+        291.5f, //Vpis
+        304f, //Vsala
+        310f, //coworking
+        317.5f, //Sparty
+        326.5f, //Cafe
+        340f, //suplementos
+        345f, //fisio
+        354.7f, //arte
     };
 
     // Array de nombres en ingles (28 elementos)
@@ -59,7 +84,7 @@ public class Video360Manager : MonoBehaviour
         "Calisthenics & Box Area",
         "OCR Circuit",
         "Padel Court",
-        "Fight Club",
+        "Fight Club (Boxing & Dojo)",
         "CROSSFIT / HYROX",
         "Pilates Equipment Studio",
         "Pole Dance Studio",
@@ -218,24 +243,24 @@ public class Video360Manager : MonoBehaviour
         Debug.Log("Video preparado y reproduciendo: " + Path.GetFileName(vp.url));
     }
 
-private void OnFolderVideoEnd(VideoPlayer vp)
-{
-    StopVideo();
-
-    if (!playFirstVideo)
+    private void OnFolderVideoEnd(VideoPlayer vp)
     {
-        if (isSpanish)
+        StopVideo();
+
+        if (!playFirstVideo)
         {
-            if (gameObjectToActivateES != null) gameObjectToActivateES.SetActive(true);
-            if (gameObjectToDesactivateES != null) gameObjectToDesactivateES.SetActive(false);
-        }
-        else
-        {
-            if (gameObjectToActivateEN != null) gameObjectToActivateEN.SetActive(true);
-            if (gameObjectToDesactivateEN != null) gameObjectToDesactivateEN.SetActive(false);
+            if (isSpanish)
+            {
+                if (gameObjectToActivateES != null) gameObjectToActivateES.SetActive(true);
+                if (gameObjectToDesactivateES != null) gameObjectToDesactivateES.SetActive(false);
+            }
+            else
+            {
+                if (gameObjectToActivateEN != null) gameObjectToActivateEN.SetActive(true);
+                if (gameObjectToDesactivateEN != null) gameObjectToDesactivateEN.SetActive(false);
+            }
         }
     }
-}
 
 
 
@@ -439,20 +464,19 @@ private void OnFolderVideoEnd(VideoPlayer vp)
 
     private IEnumerator CambiarTextoCoroutine(float[] tiempos, string[] nombres)
     {
-        float tiempoAnterior = 0f;
-
-        for (int i = 0; i < tiempos.Length; i++)
+        int i = 0;
+        // Mientras queden eventos de cambio
+        while (i < tiempos.Length)
         {
-            // Calculamos el tiempo a esperar respecto al cambio anterior.
-            float esperar = tiempos[i] - tiempoAnterior;
-            if (esperar > 0)
-                yield return new WaitForSeconds(esperar);
-
-            // Actualizamos el texto utilizando el método existente.
+            // Espera hasta que el tiempo actual del video sea mayor o igual al tiempo objetivo
+            while (videoPlayer.time < tiempos[i])
+            {
+                yield return null; // Espera al siguiente frame
+            }
+    
+            // Una vez alcanzado el tiempo, cambia el texto
             MostrarTextoEnTMP(nombres[i]);
-
-            // Actualizamos el tiempoAnterior para el siguiente ciclo.
-            tiempoAnterior = tiempos[i];
+            i++; // Avanza al siguiente evento
         }
     }
 }
