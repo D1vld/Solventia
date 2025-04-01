@@ -25,7 +25,6 @@ public class Video360Manager : MonoBehaviour
     [SerializeField] private GameObject gameObjectToDesactivateES;
     [SerializeField] private GameObject gameObjectToDesactivateEN;
 
-
     [Header("Paneles Interactables (Duplicados)")]
     [SerializeField] private GameObject panelInteractableES;
     [SerializeField] private GameObject panelInteractableEN;
@@ -43,7 +42,7 @@ public class Video360Manager : MonoBehaviour
     [Header("Idioma")]
     [SerializeField] private bool isSpanish = true;
 
-    // Array de tiempos (en segundos) para cada estancia (28 elementos)
+    // Array de Solventia (28 elementos)
     private float[] tiempos = new float[]
     {
         1f,   // piscina
@@ -75,8 +74,6 @@ public class Video360Manager : MonoBehaviour
         345f, //fisio
         354.7f, //arte
     };
-
-    // Array de nombres en ingles (28 elementos)
     private string[] nombresEN = new string[]
     {
         "Semi-Olympic Pool & Hydrothermal Pool",
@@ -108,8 +105,6 @@ public class Video360Manager : MonoBehaviour
         "Physiotherapy Clinic",
         "Artworks by Daniel Rodríguez Báez"
     };
-
-    // Array de nombres en español (28 elementos)
     private string[] nombresES = new string[]
     {
         "Piscina Semiolímpica y Piscina Hidrotermal",
@@ -140,6 +135,50 @@ public class Video360Manager : MonoBehaviour
         "Tienda Nutrición",
         "Clínica Fisioterapia",
         "Obras de Arte (Artista Daniel Rodríguez Báez)"
+    };
+
+    // Array de cedaga (10 elementos)
+    private float[] tiemposcedaga = new float[]
+    {
+        0.8f,     // Piscina
+        20,   // Aquagym
+        33,   // Musculo
+        70.5f, // Boxeo
+        84.3f, // Pilate
+        100.3f,   // Indoor
+        114,   // Solarium
+        133,   // Ludoteca
+        156, // Abonados
+        172,   // Familia
+        
+    };
+    private string[] nombresENcedaga = new string[]
+    {
+        "Semi-Olympic Pool",
+        "Instructional & Aquagym Pool",
+        "Fitness & Weight Training Room",
+        "Fight Club (Boxing)",
+        "Pilates Reformer Studio",
+        "Group Training Room (Indoor Activities)",
+        "Spinning Studio",
+        "Outdoor Solarium",
+        "Kids’ Playroom",
+        "Member Changing Rooms",
+        "Family Changing Rooms",
+    };
+    private string[] nombresEScedaga = new string[]
+    {
+        "Piscina Semiolímpica",
+        "Piscina de enseñanza y Aquagym",
+        "Sala Fitness/Musculación",
+        "Fight Club (Boxing)",
+        "Sala Pilates Máquina",
+        "Sala Actividades Dirigidas Indoor",
+        "Sala Spinning",
+        "Ludoteca",
+        "Solarium",
+        "Vestuarios Abonados",
+        "Vestuarios de Familias",
     };
 
     private Coroutine cambioTextoCoroutine;
@@ -334,7 +373,6 @@ public class Video360Manager : MonoBehaviour
         SetSkyboxTintColor("#808080");
     }
 
-
     public void StopVideo()
     {
         if (videoPlayer != null)
@@ -360,7 +398,7 @@ public class Video360Manager : MonoBehaviour
         SetCameraToSolidColor("#000000");        
     }
 
-    public void VideoSkipTime(int time)
+    public void VideoSkipTime(float time)
     {
         if (videoPlayer != null)
             videoPlayer.time = time;
@@ -377,17 +415,6 @@ public class Video360Manager : MonoBehaviour
         StopVideo();
         Debug.Log("Video detenido tras " + seconds + " segundos.");
     }
-
-    public void MostrarTextoEnTMP(string texto)
-    {
-        if (textMeshPro == null)
-            return;
-
-        textMeshPro.text = texto;
-        if (!textMeshPro.gameObject.activeSelf)
-            textMeshPro.gameObject.SetActive(true);
-    }
-
 
     public void ToggleLanguage()
     {
@@ -439,9 +466,18 @@ public class Video360Manager : MonoBehaviour
 
     #endregion
 
+    #region Métodos Subtitulos
 
-    /////// IGG
-    ///
+    public void MostrarTextoEnTMP(string texto)
+    {
+        if (textMeshPro == null)
+            return;
+
+        textMeshPro.text = texto;
+        if (!textMeshPro.gameObject.activeSelf)
+            textMeshPro.gameObject.SetActive(true);
+    }
+
     public void IniciarCambioTexto()
     {
         // Si ya hay una coroutine en ejecución, se detiene primero
@@ -479,4 +515,43 @@ public class Video360Manager : MonoBehaviour
             i++; // Avanza al siguiente evento
         }
     }
+
+    public void IniciarCambioTextoCedaga()
+    {
+        // Si ya hay una coroutine en ejecución, se detiene primero
+        if (cambioTextoCoroutine != null)
+        {
+            StopCoroutine(cambioTextoCoroutine);
+            cambioTextoCoroutine = null;
+        }
+
+        // Reiniciamos el texto
+        textMeshPro.text = "";
+        textMeshPro.gameObject.SetActive(true);
+
+        // Seleccionamos el array de nombres según el idioma
+        string[] nombresSeleccionados = isSpanish ? nombresEScedaga : nombresENcedaga;
+
+        // Iniciamos la coroutine que se encargará de actualizar el texto
+        cambioTextoCoroutine = StartCoroutine(CambiarTextoCoroutineCedaga(tiemposcedaga, nombresSeleccionados));
+    }
+
+    private IEnumerator CambiarTextoCoroutineCedaga(float[] tiempos, string[] nombres)
+    {
+        int i = 0;
+        // Mientras queden eventos de cambio
+        while (i < tiempos.Length)
+        {
+            // Espera hasta que el tiempo actual del video sea mayor o igual al tiempo objetivo
+            while (videoPlayer.time < tiempos[i])
+            {
+                yield return null; // Espera al siguiente frame
+            }
+    
+            // Una vez alcanzado el tiempo, cambia el texto
+            MostrarTextoEnTMP(nombres[i]);
+            i++; // Avanza al siguiente evento
+        }
+    }
+    #endregion
 }

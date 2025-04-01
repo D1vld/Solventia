@@ -34,6 +34,7 @@ TagManager:
   - PinHotel
   - Panoramicas
   - VideoPlayer
+  - Toggle
   layers:
   - Default
   - TransparentFX
