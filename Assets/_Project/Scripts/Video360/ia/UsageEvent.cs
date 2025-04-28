@@ -30,21 +30,21 @@ public class AdditionalData
 [Serializable]
 public class UsageEvent
 {
-    public string eventId;       // Identificador único para el evento.
-    public string sessionId;     // Identificador de la sesión en la que se produjo el evento.
-    public string eventName;     // Descripción o nombre del evento.
+    public string eventId;       // Identificador ï¿½nico para el evento.
+    public string sessionId;     // Identificador de la sesiï¿½n en la que se produjo el evento.
+    public string eventName;     // Descripciï¿½n o nombre del evento.
     public string timestamp;     // Marca de tiempo en formato ISO 8601.
-    public string objectId;      // Identificación del objeto o UI involucrada.
-    public float duration;       // Duración del evento (si es aplicable).
+    public string objectId;      // Identificaciï¿½n del objeto o UI involucrada.
+    public string duration;       // Duraciï¿½n del evento (si es aplicable).
     public AdditionalData additionalData;  // Datos adicionales en formato serializable.
 
-    // Constructor que inicializa el evento y asigna automáticamente el GUID y la marca de tiempo.
-    public UsageEvent(string sessionId, string eventName, string objectId, float duration = 0f)
+    // Constructor que inicializa el evento y asigna automï¿½ticamente el GUID y la marca de tiempo.
+    public UsageEvent(string sessionId, string eventName, string objectId, string duration = "")
     {
-        this.eventId = Guid.NewGuid().ToString();
+        this.eventId = MetricsHelper.GenerateEventID(sessionId);
         this.sessionId = sessionId;
         this.eventName = eventName;
-        this.timestamp = DateTime.UtcNow.ToString("o"); // Formato ISO 8601.
+        this.timestamp = DateTime.UtcNow.ToString("s"); // Formato ISO 8601. "yyyy-MM-ddTHH:mm:ss'Z'"
         this.objectId = objectId;
         this.duration = duration;
         this.additionalData = new AdditionalData();

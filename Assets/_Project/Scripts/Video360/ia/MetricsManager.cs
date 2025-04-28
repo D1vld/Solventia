@@ -4,67 +4,83 @@ using System.IO;
 using UnityEngine;
 
 /// <summary>
-/// MetricsManager: Clase singleton para capturar y gestionar el buffer de UsageEvent.
+/// MetricsManager: Clase para capturar y gestionar el buffer de UsageEvent.
 /// </summary>
 public class MetricsManager : MonoBehaviour
 {
-    // Buffer de eventos en memoria.
     private List<UsageEvent> eventBuffer = new List<UsageEvent>();
-
-    // Identificador de la sesión actual y el nombre del fichero.
     private string sessionId;
     private string currentFilename;
 
-    // Configuraciones para el volcado del buffer.
-    [SerializeField]
-    private float flushInterval = 10f;        // Tiempo (segundos) para volcar el buffer periódicamente.
-    [SerializeField]
-    private int maxBufferSize = 10;             // Tamaño máximo del buffer para disparar un volcado inmediato.
+    [Tooltip("Intervalo (en segundos) para volcar el buffer a disco.")]
+    [SerializeField] private float flushInterval = 10f;
 
-    private void Awake()
+    [Tooltip("Cantidad mï¿½xima de eventos en el buffer antes de forzar un volcado a disco.")]
+    [SerializeField] private int maxBufferSize = 10;
+
+    [Tooltip("Servicio de reproducciï¿½n de video.")]
+    //[SerializeField] private MonoBehaviour videoPlaybackServiceComponent;
+    [SerializeField] private Video360Manager _videoService;
+
+    private bool _skipFirstResumeEvent = true;
+    private bool sessionEnded = false;
+    void Awake()
     {
-        // Inicializar el sessionId y el nombre del fichero (basados en la fecha actual).
+        Initialize();
+    }
+    public void Initialize()
+    {
         sessionId = MetricsHelper.GenerateSessionID();
         currentFilename = MetricsHelper.GetCurrentDateFilename();
-    }
-    private void Start()
-    {
-        // Iniciar la Coroutine de volcado periódico.
+        //_videoService = videoPlaybackServiceComponent as IVideoPlaybackService;
         StartCoroutine(FlushBufferPeriodically());
     }
 
-    /// <summary>
-    /// Registra un nuevo evento y lo agrega al buffer.
-    /// </summary>
-    /// <param name="eventName">Nombre o descripción del evento (ej: SessionStarted, ButtonClicked).</param>
-    /// <param name="objectId">Identificador del objeto o UI afectada.</param>
-    /// <param name="duration">Duración del evento (0 si no aplica).</param>
-    public void LogUsageEvent(string eventName, string objectId, float duration = 0f)
+    public void LogUsageEvent(string eventName, string objectId, string duration)
     {
-        // Crear una instancia de UsageEvent con la información requerida.
         UsageEvent newEvent = new UsageEvent(sessionId, eventName, objectId, duration);
         eventBuffer.Add(newEvent);
 
-        // Verificar si se alcanzó el tamaño máximo del buffer.
         if (eventBuffer.Count >= maxBufferSize)
         {
-            // Iniciar un volcado inmediato si el buffer es demasiado grande.
             StartCoroutine(FlushBuffer());
         }
     }
 
-    /// <summary>
-    /// Coroutine que periódicamente revisa y vacía el buffer en disco.
-    /// </summary>
-    /// <returns></returns>
+    public void PauseVideo()
+    {
+        Debug.Log("Usuario ausente: pausando vï¿½deo.");
+        _videoService.videoPlayer.Pause();
+
+        float rawTime = _videoService.GetCurrentPlaybackTime();
+        string videoName = _videoService.GetCurrentVideoName();
+        string playbackTime = rawTime.ToString("F2");
+        //LogUsageEvent("VideoEnd", "Pause", playbackTime);
+    }
+
+    public void ResumeVideo()
+    {
+        if (_skipFirstResumeEvent)
+        {
+            _skipFirstResumeEvent = false;
+            return;
+        }
+
+        Debug.Log("Usuario presente: reanudando vï¿½deo.");
+        _videoService.videoPlayer.Play();
+
+        float rawTime = _videoService.GetCurrentPlaybackTime();
+        string videoName = _videoService.GetCurrentVideoName();
+        string playbackTime = rawTime.ToString("F2");
+        LogUsageEvent("VideoStart", "Pause", playbackTime);
+    }
+
     private IEnumerator FlushBufferPeriodically()
     {
         while (true)
         {
-            // Espera el intervalo configurado.
             yield return new WaitForSeconds(flushInterval);
 
-            // Si hay eventos en el buffer, volcarlos a disco.
             if (eventBuffer.Count > 0)
             {
                 yield return StartCoroutine(FlushBuffer());
@@ -72,20 +88,13 @@ public class MetricsManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Coroutine encargada de vaciar el buffer y escribir los eventos en el fichero diario.
-    /// </summary>
-    /// <returns></returns>
     private IEnumerator FlushBuffer()
     {
-        // Copia del buffer y limpieza inmediata para evitar pérdidas si la escritura se retrasa.
         List<UsageEvent> eventsToFlush = new List<UsageEvent>(eventBuffer);
         eventBuffer.Clear();
 
-        // Construir la ruta completa del fichero usando Application.persistentDataPath.
         string filePath = Path.Combine(Application.persistentDataPath, currentFilename);
 
-        // Realizar la escritura en disco en modo append.
         try
         {
             using (StreamWriter sw = new StreamWriter(filePath, true))
@@ -93,43 +102,16 @@ public class MetricsManager : MonoBehaviour
                 foreach (UsageEvent usageEvent in eventsToFlush)
                 {
                     string jsonStr = JsonUtility.ToJson(usageEvent);
-                    sw.WriteLine(jsonStr); // Cada línea representa un evento en formato JSON.
+                    sw.WriteLine(jsonStr);
                 }
             }
         }
         catch (System.Exception e)
         {
             Debug.LogError("Error al volcar eventos a disco: " + e);
-            // Si ocurre un error, se reincorporan los eventos al inicio del buffer.
             eventBuffer.InsertRange(0, eventsToFlush);
         }
 
         yield return null;
-    }
-
-    /// <summary>
-    /// Se asegura que se vacíen los eventos pendientes cuando se cierra la aplicación.
-    /// </summary>
-    private void OnApplicationQuit()
-    {
-        if (eventBuffer.Count > 0)
-        {
-            string filePath = Path.Combine(Application.persistentDataPath, currentFilename);
-            try
-            {
-                using (StreamWriter sw = new StreamWriter(filePath, true))
-                {
-                    foreach (UsageEvent usageEvent in eventBuffer)
-                    {
-                        string jsonStr = JsonUtility.ToJson(usageEvent);
-                        sw.WriteLine(jsonStr);
-                    }
-                }
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError("Error al vaciar eventos en OnApplicationQuit: " + e);
-            }
-        }
     }
 }

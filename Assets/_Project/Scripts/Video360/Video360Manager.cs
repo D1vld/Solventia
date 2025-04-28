@@ -13,7 +13,7 @@ public class Video360Manager : MonoBehaviour
 
     [Header("Video Player 360")]
     [Header("Video Player 360")]
-    [SerializeField] private VideoPlayer videoPlayer;
+    [SerializeField] public VideoPlayer videoPlayer;
 
     [Header("Carpeta local de los videos 360")]
     [SerializeField] private string folderPath = "/storage/emulated/0/Movies/360Videos";
@@ -192,7 +192,8 @@ public class Video360Manager : MonoBehaviour
     private List<string> videoPaths = new List<string>();
 
     // CAMPOS PARA MÉTRICAS
-    private MetricsManager metricMgr;
+    [SerializeField] private MetricsManager metricMgr;
+    [SerializeField] private SyncManager syncManager;
     private float sessionStartTime;
     private float environmentStartTime;
     private bool environmentActive = false;
@@ -201,12 +202,17 @@ public class Video360Manager : MonoBehaviour
 
     #region Unity Lifecycle
 
-    private void Start()
+    void Awake()
     {
         if (videoPlayer == null)
             videoPlayer = GetComponent<VideoPlayer>();
 
         videoPlayer.playOnAwake = false;
+        
+    }
+    private void Start()
+    {
+        
 
         if (materialSkyboxVideo != null)
             SetSkyboxTintColor("#808080");
@@ -223,20 +229,31 @@ public class Video360Manager : MonoBehaviour
         sessionStartTime = Time.time;
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("SessionStarted", "Video360Manager");
+            metricMgr.LogUsageEvent("SessionStarted", "Start", "0");
         }
-
+        syncManager = FindObjectOfType<SyncManager>();
+        
+        //syncManager.StartSync();
         //PrepareCurrentVideo();
     }
 
     // Se registra SessionEnded al cerrar la aplicación
     private void OnApplicationQuit()
     {
-        if (metricMgr != null)
+        /*if (metricMgr != null)
         {
             float sessionDuration = Time.time - sessionStartTime;
             metricMgr.LogUsageEvent("SessionEnded", "Video360Manager", sessionDuration);
-        }
+        }*/
+        RecordQuitEvent();
+    }
+
+    private void RecordQuitEvent()
+    {
+        string vidQuitName = GetCurrentVideoName();
+        string timeVideo = GetCurrentPlaybackTime().ToString();
+        metricMgr.LogUsageEvent("VideoEnd", "Quit_" + vidQuitName, timeVideo);
+        metricMgr.LogUsageEvent("SessionEnded", "Quit", "0");
     }
 
     #endregion
@@ -312,7 +329,7 @@ public class Video360Manager : MonoBehaviour
             string videoName = Path.GetFileName(vp.url);
             environmentStartTime = Time.time;
             environmentActive = true;
-            metricMgr.LogUsageEvent("EntornoCargado", videoName);
+            metricMgr.LogUsageEvent("EntornoCargado", videoName, "0");
         }
     }
 
@@ -350,6 +367,18 @@ public class Video360Manager : MonoBehaviour
 
     #region Métodos de Reproducción
 
+    public string GetCurrentVideoName()
+    {
+        if (videoPlayer != null && !string.IsNullOrEmpty(videoPlayer.url))
+        {return Path.GetFileName(videoPlayer.url);}
+        else{Debug.Log("no sale video");}
+        return "unknown";
+    }
+ 
+    public float GetCurrentPlaybackTime()
+    {
+        return videoPlayer != null ? (float)videoPlayer.time : 0f;
+    }
     private void NextVideo()
     {
         currentVideoIndex = (currentVideoIndex + 1) % videoPaths.Count;
@@ -361,7 +390,7 @@ public class Video360Manager : MonoBehaviour
         // MÉTRICA: UIElementClicked para cambiar de video por índice
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "PlayVideoByIndex");
+            metricMgr.LogUsageEvent("UIElementClicked", "PlayVideoByIndex", "0");
         }
 
         if (index < 0 || index >= videoPaths.Count)
@@ -383,7 +412,10 @@ public class Video360Manager : MonoBehaviour
         // MÉTRICA: UIElementClicked para reanudar video
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "ResumeVideo");
+            float rawTime = GetCurrentPlaybackTime();
+            string videoName = GetCurrentVideoName();
+            string playbackTime = rawTime.ToString("F2");
+            metricMgr.LogUsageEvent("VideoStart", "ResumeVideo_" +videoName , playbackTime);
         }
 
         if (videoPlayer != null && videoPlayer.isPrepared)
@@ -422,21 +454,23 @@ public class Video360Manager : MonoBehaviour
         // Si se está reproduciendo un entorno, registrar la salida y los eventos de completado/incompleto.
         if (metricMgr != null && environmentActive)
         {
-            float duration = Time.time - environmentStartTime;
-            string videoName = Path.GetFileName(videoPlayer.url);
+            float rawTime = GetCurrentPlaybackTime();
+            string videoName = GetCurrentVideoName();
+            string playbackTime = rawTime.ToString("F2");
             // MÉTRICA: Entorno Descargado/Saliente con la duración transcurrida.
-            metricMgr.LogUsageEvent("EntornoDescargado", videoName, duration);
+            metricMgr.LogUsageEvent("EntornoDescargado", videoName, playbackTime);
+            metricMgr.LogUsageEvent("VideoEnd", "PaueseVideo_" +videoName , playbackTime);
 
             // Se define una tolerancia para considerar el video finalizado.
-            float tolerance = 1.0f;
+            float tolerance = 0.1f;
             if (videoPlayer.length > 0 && (videoPlayer.length - videoPlayer.time <= tolerance))
             {
-                metricMgr.LogUsageEvent("EnviromentCompleted", videoName, duration);
+                metricMgr.LogUsageEvent("EnviromentCompleted", videoName, playbackTime);
             }
             else
             {
                 float progress = videoPlayer.length > 0 ? (float)(videoPlayer.time / videoPlayer.length * 100.0) : 0f;
-                metricMgr.LogUsageEvent("EnviromentIncompleted", videoName, progress);
+                metricMgr.LogUsageEvent("EnviromentIncompleted", videoName, playbackTime);
             }
             environmentActive = false;
         }
@@ -464,6 +498,16 @@ public class Video360Manager : MonoBehaviour
         SetCameraToSolidColor("#000000");        
     }
 
+    public void ClickUIVolver()
+    {
+        metricMgr.LogUsageEvent("UIElementClicked", "Volver", "0");
+    }
+
+    public void ClickUISalir()
+    {
+        metricMgr.LogUsageEvent("UIElementClicked", "Salir", "0");
+    }
+
     public void VideoSkipTime(float time)
     {
         if (videoPlayer != null)
@@ -487,7 +531,6 @@ public class Video360Manager : MonoBehaviour
         // MÉTRICA: UIElementClicked para cambiar idioma
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "ToggleLanguage");
         }
         isSpanish = !isSpanish;
     }
@@ -495,6 +538,15 @@ public class Video360Manager : MonoBehaviour
     public void SetLanguage(bool value)
     {
         isSpanish = value;
+
+        if(isSpanish)
+        {
+            metricMgr.LogUsageEvent("UIElementClicked", "SelectLanguage_Spanish", "0");
+        }
+        else
+        {
+            metricMgr.LogUsageEvent("UIElementClicked", "SelectLanguage_English", "0");
+        }
     }
 
     public void SetVideoOption(bool option)
@@ -502,7 +554,7 @@ public class Video360Manager : MonoBehaviour
         // MÉTRICA: UIElementClicked para cambiar opción de video
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "SetVideoOption");
+            metricMgr.LogUsageEvent("UIElementClicked", "SelectVideo_"+GetCurrentVideoName()/*intentar descubrir el video de preferencia*/, "0");
         }
         playFirstVideo = option;
         currentVideoIndex = playFirstVideo ? 0 : 1;
@@ -591,7 +643,7 @@ public class Video360Manager : MonoBehaviour
             // MÉTRICA: Se registra el objetivo completado (zona visitada)
             if (metricMgr != null)
             {
-                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i]);
+                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i],"0"/*lo que diga ia*/);
             }
             i++; // Avanza al siguiente evento
         }
@@ -634,7 +686,7 @@ public class Video360Manager : MonoBehaviour
             // MÉTRICA: Se registra el objetivo completado (zona visitada)
             if (metricMgr != null)
             {
-                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i]);
+                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i], "0"/*lo que diga ia*/);
             }
             i++; // Avanza al siguiente evento
         }

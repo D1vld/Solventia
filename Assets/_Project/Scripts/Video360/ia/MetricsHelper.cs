@@ -1,16 +1,62 @@
 using System;
+using UnityEngine;
 
 public static class MetricsHelper
 {
-    // Genera un identificador único para la sesión utilizando GUID.
+    public const string appName = "Solventia";
+
+    // Contador de eventos para la sesiï¿½n actual
+    private static int eventCounter = 0;
+
+    /// <summary>
+    /// Genera un sessionId tipo "NombreProyecto-YYYYMMDD-N".
+    /// Reinicia el contador de eventos para la nueva sesiï¿½n.
+    /// </summary>
     public static string GenerateSessionID()
     {
-        return Guid.NewGuid().ToString();
+        // 1. Fecha en formato YYYYMMDD
+        string today = DateTime.UtcNow.ToString("yyyyMMdd");
+
+        // 2. Clave en PlayerPrefs para contar sesiones diarias
+        string key = $"SessionCount_{today}";
+
+        // 3. Incrementa contador (valor por defecto 0)
+        int count = PlayerPrefs.GetInt(key, 0) + 1;
+        PlayerPrefs.SetInt(key, count);
+        PlayerPrefs.Save();
+
+        // 4. REINICIAMOS contador de eventos al comenzar nueva sesiï¿½n
+        eventCounter = 0;  // <-- MODIFICACIï¿½N para eventCounter
+
+        // 5. Construye el sessionId
+        return $"{appName}-{today}-{count:D3}";
     }
 
-    // Devuelve el nombre del archivo para el día actual en formato "metrics-YYYY-MM-DD.json".
+    /// <summary>
+    /// Genera un eventId basado en fecha, nï¿½mero de sesiï¿½n y un incremental:
+    /// "evt-YYYYMMDD-<sesiï¿½n>-<evento 4 dï¿½gitos>".
+    /// </summary>
+    public static string GenerateEventID(string sessionId)
+    {
+        // 1. Incrementamos el contador de eventos
+        eventCounter++;   // <-- MODIFICACIï¿½N para incrementar evento
+
+        // 2. Extraemos fecha y nï¿½mero de sesiï¿½n de sessionId
+        //    Formato espera: "NombreProyecto-YYYYMMDD-N"
+        string[] parts = sessionId.Split('-');
+        string datePart = parts[1]; // "YYYYMMDD"
+        string sessionNum = parts[2]; // "N"
+
+        // 3. Formateamos el incremental a 4 dï¿½gitos con ceros a la izquierda
+        string eventNum = eventCounter.ToString("D4");
+
+        // 4. Construye el eventId final
+        return $"evt-{datePart}-{sessionNum}-{eventNum}";  // <-- MODIFICACIï¿½N en construcciï¿½n de eventId
+    }
+
+    // Devuelve el nombre del archivo para el dï¿½a actual en formato "metrics-YYYY-MM-DD.json".
     public static string GetCurrentDateFilename()
     {
-        return "metrics-" + DateTime.UtcNow.ToString("yyyy-MM-dd") + ".json";
+        return "metrics_"+appName + DateTime.UtcNow.ToString("yyyy-MM-dd") + ".json";
     }
 }
