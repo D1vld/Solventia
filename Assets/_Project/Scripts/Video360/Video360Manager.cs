@@ -5,11 +5,13 @@ using System.Collections.Generic;
 using TMPro;
 using System.IO;
 using System.Linq;
+using System;
 
 public class Video360Manager : MonoBehaviour
 {
     #region Inspector Fields
 
+    [Header("Video Player 360")]
     [Header("Video Player 360")]
     [SerializeField] private VideoPlayer videoPlayer;
 
@@ -46,33 +48,33 @@ public class Video360Manager : MonoBehaviour
     private float[] tiempos = new float[]
     {
         1f,   // piscina
-        6.7f, //musculo
-        78f,  //calistenia
-        116f, //ocr
-        140.5f, //padel
-        148.5f, //dojo
-        168f, //crossfit
-        183f, //pilate
-        190f, //pole
-        195.8f, //cuerpo
-        202f, //indoor
-        208f, //outdoor
-        217f, //spinnig
-        231f, //hiitarea
-        241f, //personal
-        253f, //tierra
-        261.3f, //rapida
-        268f, //ludoteca
-        276.5f, //baloncesto
-        284f, //futboll
-        291.5f, //Vpis
-        304f, //Vsala
-        310f, //coworking
-        317.5f, //Sparty
-        326.5f, //Cafe
-        340f, //suplementos
-        345f, //fisio
-        354.7f, //arte
+        6.7f, // musculo
+        78f,  // calistenia
+        116f, // ocr
+        140.5f, // padel
+        148.5f, // dojo
+        168f, // crossfit
+        183f, // pilate
+        190f, // pole
+        195.8f, // cuerpo
+        202f, // indoor
+        208f, // outdoor
+        217f, // spinnig
+        231f, // hiitarea
+        241f, // personal
+        253f, // tierra
+        261.3f, // rapida
+        268f, // ludoteca
+        276.5f, // baloncesto
+        284f, // futboll
+        291.5f, // Vpis
+        304f, // Vsala
+        310f, // coworking
+        317.5f, // Sparty
+        326.5f, // Cafe
+        340f, // suplementos
+        345f, // fisio
+        354.7f, // arte
     };
     private string[] nombresEN = new string[]
     {
@@ -141,16 +143,15 @@ public class Video360Manager : MonoBehaviour
     private float[] tiemposcedaga = new float[]
     {
         0.8f,     // Piscina
-        20,   // Aquagym
-        33,   // Musculo
-        70.5f, // Boxeo
-        84.3f, // Pilate
+        20f,      // Aquagym
+        33f,      // Musculo
+        70.5f,    // Boxeo
+        84.3f,    // Pilate
         100.3f,   // Indoor
-        114,   // Solarium
-        133,   // Ludoteca
-        156, // Abonados
-        172,   // Familia
-        
+        114f,     // Solarium
+        133f,    // Ludoteca
+        156f,     // Abonados
+        172f,    // Familia        
     };
     private string[] nombresENcedaga = new string[]
     {
@@ -190,6 +191,12 @@ public class Video360Manager : MonoBehaviour
     private int currentVideoIndex = 0;
     private List<string> videoPaths = new List<string>();
 
+    // CAMPOS PARA MÉTRICAS
+    private MetricsManager metricMgr;
+    private float sessionStartTime;
+    private float environmentStartTime;
+    private bool environmentActive = false;
+
     #endregion
 
     #region Unity Lifecycle
@@ -211,7 +218,25 @@ public class Video360Manager : MonoBehaviour
         else if (videoPaths.Count == 1)
             currentVideoIndex = 0;
 
+        // INTEGRACIÓN DE MÉTRICAS: Obtener MetricsManager y registrar SessionStarted
+        metricMgr = FindObjectOfType<MetricsManager>();
+        sessionStartTime = Time.time;
+        if (metricMgr != null)
+        {
+            metricMgr.LogUsageEvent("SessionStarted", "Video360Manager");
+        }
+
         //PrepareCurrentVideo();
+    }
+
+    // Se registra SessionEnded al cerrar la aplicación
+    private void OnApplicationQuit()
+    {
+        if (metricMgr != null)
+        {
+            float sessionDuration = Time.time - sessionStartTime;
+            metricMgr.LogUsageEvent("SessionEnded", "Video360Manager", sessionDuration);
+        }
     }
 
     #endregion
@@ -280,6 +305,15 @@ public class Video360Manager : MonoBehaviour
     {
         vp.Play();
         Debug.Log("Video preparado y reproduciendo: " + Path.GetFileName(vp.url));
+
+        // MÉTRICA: Entorno Cargado
+        if (metricMgr != null)
+        {
+            string videoName = Path.GetFileName(vp.url);
+            environmentStartTime = Time.time;
+            environmentActive = true;
+            metricMgr.LogUsageEvent("EntornoCargado", videoName);
+        }
     }
 
     private void OnFolderVideoEnd(VideoPlayer vp)
@@ -300,8 +334,6 @@ public class Video360Manager : MonoBehaviour
             }
         }
     }
-
-
 
     private IEnumerator CheckAndRetryVideoStartCoroutine()
     {
@@ -326,6 +358,12 @@ public class Video360Manager : MonoBehaviour
 
     public void PlayVideoByIndex(int index)
     {
+        // MÉTRICA: UIElementClicked para cambiar de video por índice
+        if (metricMgr != null)
+        {
+            metricMgr.LogUsageEvent("UIElementClicked", "PlayVideoByIndex");
+        }
+
         if (index < 0 || index >= videoPaths.Count)
         {
             Debug.LogWarning("Índice fuera de rango.");
@@ -342,6 +380,12 @@ public class Video360Manager : MonoBehaviour
 
     public void ResumeVideo()
     {
+        // MÉTRICA: UIElementClicked para reanudar video
+        if (metricMgr != null)
+        {
+            metricMgr.LogUsageEvent("UIElementClicked", "ResumeVideo");
+        }
+
         if (videoPlayer != null && videoPlayer.isPrepared)
             videoPlayer.Play();
 
@@ -375,6 +419,28 @@ public class Video360Manager : MonoBehaviour
 
     public void StopVideo()
     {
+        // Si se está reproduciendo un entorno, registrar la salida y los eventos de completado/incompleto.
+        if (metricMgr != null && environmentActive)
+        {
+            float duration = Time.time - environmentStartTime;
+            string videoName = Path.GetFileName(videoPlayer.url);
+            // MÉTRICA: Entorno Descargado/Saliente con la duración transcurrida.
+            metricMgr.LogUsageEvent("EntornoDescargado", videoName, duration);
+
+            // Se define una tolerancia para considerar el video finalizado.
+            float tolerance = 1.0f;
+            if (videoPlayer.length > 0 && (videoPlayer.length - videoPlayer.time <= tolerance))
+            {
+                metricMgr.LogUsageEvent("EnviromentCompleted", videoName, duration);
+            }
+            else
+            {
+                float progress = videoPlayer.length > 0 ? (float)(videoPlayer.time / videoPlayer.length * 100.0) : 0f;
+                metricMgr.LogUsageEvent("EnviromentIncompleted", videoName, progress);
+            }
+            environmentActive = false;
+        }
+
         if (videoPlayer != null)
             videoPlayer.Pause();
 
@@ -418,6 +484,11 @@ public class Video360Manager : MonoBehaviour
 
     public void ToggleLanguage()
     {
+        // MÉTRICA: UIElementClicked para cambiar idioma
+        if (metricMgr != null)
+        {
+            metricMgr.LogUsageEvent("UIElementClicked", "ToggleLanguage");
+        }
         isSpanish = !isSpanish;
     }
 
@@ -428,6 +499,11 @@ public class Video360Manager : MonoBehaviour
 
     public void SetVideoOption(bool option)
     {
+        // MÉTRICA: UIElementClicked para cambiar opción de video
+        if (metricMgr != null)
+        {
+            metricMgr.LogUsageEvent("UIElementClicked", "SetVideoOption");
+        }
         playFirstVideo = option;
         currentVideoIndex = playFirstVideo ? 0 : 1;
         PrepareCurrentVideo();
@@ -509,9 +585,14 @@ public class Video360Manager : MonoBehaviour
             {
                 yield return null; // Espera al siguiente frame
             }
-    
+
             // Una vez alcanzado el tiempo, cambia el texto
             MostrarTextoEnTMP(nombres[i]);
+            // MÉTRICA: Se registra el objetivo completado (zona visitada)
+            if (metricMgr != null)
+            {
+                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i]);
+            }
             i++; // Avanza al siguiente evento
         }
     }
@@ -547,11 +628,16 @@ public class Video360Manager : MonoBehaviour
             {
                 yield return null; // Espera al siguiente frame
             }
-    
+
             // Una vez alcanzado el tiempo, cambia el texto
             MostrarTextoEnTMP(nombres[i]);
+            // MÉTRICA: Se registra el objetivo completado (zona visitada)
+            if (metricMgr != null)
+            {
+                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i]);
+            }
             i++; // Avanza al siguiente evento
         }
     }
-    #endregion
 }
+#endregion
