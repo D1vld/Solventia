@@ -1,117 +1,141 @@
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
 /// <summary>
-/// MetricsManager: Clase para capturar y gestionar el buffer de UsageEvent.
+/// Captura y gestiona el buffer de UsageEvent.
 /// </summary>
-public class MetricsManager : MonoBehaviour
+public class MetricsManager : MonoBehaviour, IMetricsManager
 {
-    private List<UsageEvent> eventBuffer = new List<UsageEvent>();
-    private string sessionId;
-    private string currentFilename;
+    /* -------------------- Configurable en el Inspector -------------------- */
 
-    [Tooltip("Intervalo (en segundos) para volcar el buffer a disco.")]
+    [Tooltip("Intervalo (seg.) para volcar el buffer a disco (sin usar actualmente).")]
     [SerializeField] private float flushInterval = 10f;
 
-    [Tooltip("Cantidad m�xima de eventos en el buffer antes de forzar un volcado a disco.")]
-    [SerializeField] private int maxBufferSize = 10;
+    [Tooltip("Eventos máximos en buffer antes de forzar volcado (sin usar actualmente).")]
+    [SerializeField] private int maxBufferSize  = 10;
 
-    [Tooltip("Servicio de reproducci�n de video.")]
-    //[SerializeField] private MonoBehaviour videoPlaybackServiceComponent;
-    [SerializeField] private Video360Manager _videoService;
+    [Tooltip("Componente que implementa IVideoPlaybackService.")]
+    [SerializeField] private MonoBehaviour videoPlaybackServiceComponent;
 
+    /* -------------------- Datos internos -------------------- */
+
+    private readonly List<UsageEvent> eventBuffer = new List<UsageEvent>();
+
+    private string sessionId       = null;
+    private string currentFilename = null;
+
+    private IVideoPlaybackService _videoService;
     private bool _skipFirstResumeEvent = true;
-    private bool sessionEnded = false;
-    void Awake()
+
+    /* --------------------------------------------------------------------- */
+    /*  INICIALIZACIÓN                                                        */
+    /* --------------------------------------------------------------------- */
+
+    private void Awake()
     {
-        Initialize();
+        // Auto-init para garantizar que sessionId existe
+        EnsureInitialized();
     }
+
+    /// <summary>
+    /// Inicializa nombres de archivo, sessionId y referencias.
+    /// Llamar solo una vez por sesión.
+    /// </summary>
     public void Initialize()
     {
-        sessionId = MetricsHelper.GenerateSessionID();
+        sessionId       = MetricsHelper.GenerateSessionID();
         currentFilename = MetricsHelper.GetCurrentDateFilename();
-        //_videoService = videoPlaybackServiceComponent as IVideoPlaybackService;
-        StartCoroutine(FlushBufferPeriodically());
+        _videoService   = videoPlaybackServiceComponent as IVideoPlaybackService;
+
+        if (_videoService == null)
+            Debug.LogError("[Metrics] videoPlaybackServiceComponent no implementa IVideoPlaybackService.");
+
+        Debug.Log($"[Metrics] Inicializado con sessionId={sessionId}");
     }
+
+    /// <summary>
+    /// Garantiza que Initialize() se ha ejecutado.
+    /// </summary>
+    private void EnsureInitialized()
+    {
+        if (string.IsNullOrEmpty(sessionId))
+            Initialize();
+    }
+
+    /* --------------------------------------------------------------------- */
+    /*  REGISTRO DE EVENTOS                                                   */
+    /* --------------------------------------------------------------------- */
 
     public void LogUsageEvent(string eventName, string objectId, string duration)
     {
+        EnsureInitialized(); // ← nuevo
+
         UsageEvent newEvent = new UsageEvent(sessionId, eventName, objectId, duration);
         eventBuffer.Add(newEvent);
-
-        if (eventBuffer.Count >= maxBufferSize)
-        {
-            StartCoroutine(FlushBuffer());
-        }
     }
+
+    /* --------------------------------------------------------------------- */
+    /*  PAUSA / RESUME                                                        */
+    /* --------------------------------------------------------------------- */
 
     public void PauseVideo()
     {
-        Debug.Log("Usuario ausente: pausando v�deo.");
-        _videoService.videoPlayer.Pause();
+        EnsureInitialized();
 
-        float rawTime = _videoService.GetCurrentPlaybackTime();
-        string videoName = _videoService.GetCurrentVideoName();
-        string playbackTime = rawTime.ToString("F2");
-        //LogUsageEvent("VideoEnd", "Pause", playbackTime);
+        if (_videoService == null) return;
+
+        Debug.Log("Usuario ausente: pausando vídeo.");
+        _videoService.Pause();
+
+        float   rawTime      = _videoService.GetCurrentPlaybackTime();
+        string  playbackTime = rawTime.ToString("F2");
+        string  videoName    = _videoService.GetCurrentVideoName();
+
+        LogUsageEvent("VideoEnd",  "Pause_"  + videoName, playbackTime);
+        LogUsageEvent("SessionEnd","Pause",  "0");
     }
 
     public void ResumeVideo()
     {
-        if (_skipFirstResumeEvent)
-        {
-            _skipFirstResumeEvent = false;
-            return;
-        }
+        EnsureInitialized();
 
-        Debug.Log("Usuario presente: reanudando v�deo.");
-        _videoService.videoPlayer.Play();
+        if (_skipFirstResumeEvent) { _skipFirstResumeEvent = false; return; }
+        if (_videoService == null) return;
 
-        float rawTime = _videoService.GetCurrentPlaybackTime();
-        string videoName = _videoService.GetCurrentVideoName();
-        string playbackTime = rawTime.ToString("F2");
-        LogUsageEvent("VideoStart", "Pause", playbackTime);
+        Debug.Log("Usuario presente: reanudando vídeo.");
+        _videoService.Play();
+
+        float   rawTime      = _videoService.GetCurrentPlaybackTime();
+        string  playbackTime = rawTime.ToString("F2");
+        string  videoName    = _videoService.GetCurrentVideoName();
+
+        LogUsageEvent("SessionStart","Resume","0");
+        LogUsageEvent("VideoStart",  "Resume_" + videoName, playbackTime);
     }
 
-    private IEnumerator FlushBufferPeriodically()
-    {
-        while (true)
-        {
-            yield return new WaitForSeconds(flushInterval);
+    /* --------------------------------------------------------------------- */
+    /*  VOLCADO SESIÓN COMPLETA                                               */
+    /* --------------------------------------------------------------------- */
 
-            if (eventBuffer.Count > 0)
-            {
-                yield return StartCoroutine(FlushBuffer());
-            }
-        }
-    }
-
-    private IEnumerator FlushBuffer()
+    public void DumpSessionToFile()
     {
-        List<UsageEvent> eventsToFlush = new List<UsageEvent>(eventBuffer);
-        eventBuffer.Clear();
+        EnsureInitialized();
 
         string filePath = Path.Combine(Application.persistentDataPath, currentFilename);
 
-        try
+        SessionPayload payload = new SessionPayload
         {
-            using (StreamWriter sw = new StreamWriter(filePath, true))
-            {
-                foreach (UsageEvent usageEvent in eventsToFlush)
-                {
-                    string jsonStr = JsonUtility.ToJson(usageEvent);
-                    sw.WriteLine(jsonStr);
-                }
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("Error al volcar eventos a disco: " + e);
-            eventBuffer.InsertRange(0, eventsToFlush);
-        }
+            sessionId = sessionId,
+            events    = eventBuffer
+        };
 
-        yield return null;
+        string json = JsonUtility.ToJson(payload, true);
+        File.AppendAllText(filePath, json);
+
+        eventBuffer.Clear();
+        Debug.Log($"[Metrics] Sesión volcada a {filePath}");
     }
+
+    /* -------------------  (Flush periódico deshabilitado) ------------------ */
 }

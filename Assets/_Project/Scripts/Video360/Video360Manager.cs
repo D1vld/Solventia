@@ -6,6 +6,7 @@ using TMPro;
 using System.IO;
 using System.Linq;
 using System;
+using UnityEngine.SceneManagement;
 
 public class Video360Manager : MonoBehaviour
 {
@@ -559,6 +560,23 @@ public class Video360Manager : MonoBehaviour
         playFirstVideo = option;
         currentVideoIndex = playFirstVideo ? 0 : 1;
         PrepareCurrentVideo();
+    }
+
+    public void RestartLevel()
+    {
+        // Registrar "session end" antes de reiniciar
+        if (metricMgr != null)
+        {
+            float sessionDuration = Time.time - sessionStartTime;
+            metricMgr.LogUsageEvent("SessionEnded", "Restart", sessionDuration.ToString());
+        }
+
+        // Aquí puedes agregar la lógica para reiniciar el nivel
+        // Esto recargará la escena actual
+        string currentScene = SceneManager.GetActiveScene().name; // Obtener el nombre de la escena actual
+        SceneManager.LoadScene(currentScene); // Recargar la escena
+
+        // Si hay algún otro comportamiento que quieras al reiniciar el nivel, como resetear variables, se puede agregar aquí
     }
 
     #endregion

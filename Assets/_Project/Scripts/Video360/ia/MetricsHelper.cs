@@ -1,62 +1,70 @@
 using System;
 using UnityEngine;
 
+/// <summary>
+/// Funciones auxiliares para IDs y nombres de archivo de métricas.
+/// </summary>
 public static class MetricsHelper
 {
     public const string appName = "Solventia";
 
-    // Contador de eventos para la sesi�n actual
+    // Contador de eventos para la sesión actual
     private static int eventCounter = 0;
 
     /// <summary>
-    /// Genera un sessionId tipo "NombreProyecto-YYYYMMDD-N".
-    /// Reinicia el contador de eventos para la nueva sesi�n.
+    /// Genera un sessionId tipo "Solventia-YYYYMMDD-NNN".
+    /// Reinicia el contador de eventos para la nueva sesión.
     /// </summary>
     public static string GenerateSessionID()
     {
-        // 1. Fecha en formato YYYYMMDD
         string today = DateTime.UtcNow.ToString("yyyyMMdd");
+        string key   = $"SessionCount_{today}";
 
-        // 2. Clave en PlayerPrefs para contar sesiones diarias
-        string key = $"SessionCount_{today}";
-
-        // 3. Incrementa contador (valor por defecto 0)
         int count = PlayerPrefs.GetInt(key, 0) + 1;
         PlayerPrefs.SetInt(key, count);
         PlayerPrefs.Save();
 
-        // 4. REINICIAMOS contador de eventos al comenzar nueva sesi�n
-        eventCounter = 0;  // <-- MODIFICACI�N para eventCounter
-
-        // 5. Construye el sessionId
+        eventCounter = 0;                         // ← reset
         return $"{appName}-{today}-{count:D3}";
     }
 
     /// <summary>
-    /// Genera un eventId basado en fecha, n�mero de sesi�n y un incremental:
-    /// "evt-YYYYMMDD-<sesi�n>-<evento 4 d�gitos>".
+    /// Genera un eventId "evt-YYYYMMDD-<sesión>-<####>".
+    /// Garantiza que siempre devuelve un ID válido aunque reciba parámetro nulo.
     /// </summary>
     public static string GenerateEventID(string sessionId)
     {
-        // 1. Incrementamos el contador de eventos
-        eventCounter++;   // <-- MODIFICACI�N para incrementar evento
+        // Salvaguarda: sessionId nulo / vacío → generamos uno nuevo
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            Debug.LogWarning("[Metrics] sessionId nulo: se crea uno nuevo on-the-fly.");
+            sessionId = GenerateSessionID();
+        }
 
-        // 2. Extraemos fecha y n�mero de sesi�n de sessionId
-        //    Formato espera: "NombreProyecto-YYYYMMDD-N"
+        eventCounter++;
+
+        // Formato esperado: "<app>-YYYYMMDD-NNN"
         string[] parts = sessionId.Split('-');
-        string datePart = parts[1]; // "YYYYMMDD"
-        string sessionNum = parts[2]; // "N"
+        if (parts.Length < 3)
+        {
+            Debug.LogWarning($"[Metrics] sessionId con formato inesperado: {sessionId}");
+            string dateFallback   = DateTime.UtcNow.ToString("yyyyMMdd");
+            string eventNumFbk    = eventCounter.ToString("D4");
+            return $"evt-{dateFallback}-000-{eventNumFbk}";
+        }
 
-        // 3. Formateamos el incremental a 4 d�gitos con ceros a la izquierda
-        string eventNum = eventCounter.ToString("D4");
+        string datePart   = parts[1];
+        string sessionNum = parts[2];
+        string eventNum   = eventCounter.ToString("D4");
 
-        // 4. Construye el eventId final
-        return $"evt-{datePart}-{sessionNum}-{eventNum}";  // <-- MODIFICACI�N en construcci�n de eventId
+        return $"evt-{datePart}-{sessionNum}-{eventNum}";
     }
 
-    // Devuelve el nombre del archivo para el d�a actual en formato "metrics-YYYY-MM-DD.json".
+    /// <summary>
+    /// Devuelve "metrics_SolventiaYYYY-MM-DD.json" (zona UTC).
+    /// </summary>
     public static string GetCurrentDateFilename()
     {
-        return "metrics_"+appName + DateTime.UtcNow.ToString("yyyy-MM-dd") + ".json";
+        return "metrics_" + appName + DateTime.UtcNow.ToString("yyyy-MM-dd") + ".json";
     }
 }

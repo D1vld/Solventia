@@ -23,7 +23,8 @@ public class SyncManager : MonoBehaviour
     [SerializeField] private string environment;
     [Tooltip("Intervalo en segundos para reintentar la sincronizaci�n si falla.")]
     [SerializeField] private float retryInterval = 60f;
-
+    [Tooltip("Check true sincroniza ficheros de metricas, check false no los sincroniza para debug.")]
+    [SerializeField] private bool syncFiles;
     [SerializeField] private MetricsManager _metricsManager;
     #endregion
 
@@ -49,12 +50,19 @@ public class SyncManager : MonoBehaviour
     /// Inicia la rutina de sincronizaci�n diaria.
     /// </summary>
     public void StartSync()
+
     {
-        if (syncCoroutine == null)
+
+        if (syncCoroutine == null && syncFiles)
+
         {
+
             syncCoroutine = StartCoroutine(SyncRoutine());
+
         }
+
     }
+ 
 
     /// <summary>
     /// Coroutine que comprueba cada retryInterval y lanza la sincronizaci�n
