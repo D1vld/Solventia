@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public static class MetricsHelper
 {
-    public const string appName = "Solventia";
+    public const string appName = "Cedaga";
 
     // Contador de eventos para la sesión actual
     private static int eventCounter = 0;

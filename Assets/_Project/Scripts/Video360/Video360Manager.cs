@@ -231,6 +231,7 @@ public class Video360Manager : MonoBehaviour
         if (metricMgr != null)
         {
             metricMgr.LogUsageEvent("SessionStarted", "Start", "0");
+            metricMgr.LogUsageEvent("UIElementClicked", "SelectLanguage_Spanish", "0");
         }
         syncManager = FindObjectOfType<SyncManager>();
         
@@ -370,10 +371,12 @@ public class Video360Manager : MonoBehaviour
 
     public string GetCurrentVideoName()
     {
-        if (videoPlayer != null && !string.IsNullOrEmpty(videoPlayer.url))
-        {return Path.GetFileName(videoPlayer.url);}
-        else{Debug.Log("no sale video");}
-        return "unknown";
+     if (videoPlayer != null && !string.IsNullOrEmpty(videoPlayer.url))
+    {
+        return Path.GetFileName(videoPlayer.url);
+    }
+    Debug.Log("no sale video");
+    return null; 
     }
  
     public float GetCurrentPlaybackTime()
@@ -416,7 +419,7 @@ public class Video360Manager : MonoBehaviour
             float rawTime = GetCurrentPlaybackTime();
             string videoName = GetCurrentVideoName();
             string playbackTime = rawTime.ToString("F2");
-            metricMgr.LogUsageEvent("VideoStart", "ResumeVideo_" +videoName , playbackTime);
+            metricMgr.LogUsageEvent("StartVideo", "StartVideo_" +videoName , playbackTime);
         }
 
         if (videoPlayer != null && videoPlayer.isPrepared)
@@ -460,7 +463,7 @@ public class Video360Manager : MonoBehaviour
             string playbackTime = rawTime.ToString("F2");
             // MÉTRICA: Entorno Descargado/Saliente con la duración transcurrida.
             metricMgr.LogUsageEvent("EntornoDescargado", videoName, playbackTime);
-            metricMgr.LogUsageEvent("VideoEnd", "PaueseVideo_" +videoName , playbackTime);
+            metricMgr.LogUsageEvent("VideoEnd", "Pause_" +videoName , playbackTime);
 
             // Se define una tolerancia para considerar el video finalizado.
             float tolerance = 0.1f;
@@ -553,31 +556,40 @@ public class Video360Manager : MonoBehaviour
     public void SetVideoOption(bool option)
     {
         // MÉTRICA: UIElementClicked para cambiar opción de video
-        if (metricMgr != null)
+        string videoName = GetCurrentVideoName();
+
+        if (metricMgr != null && !string.IsNullOrWhiteSpace(videoName))
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "SelectVideo_"+GetCurrentVideoName()/*intentar descubrir el video de preferencia*/, "0");
+            metricMgr.LogUsageEvent("UIElementClicked", $"SelectVideo_{videoName}", "0");
         }
+
         playFirstVideo = option;
         currentVideoIndex = playFirstVideo ? 0 : 1;
         PrepareCurrentVideo();
     }
 
+
     public void RestartLevel()
     {
-        // Registrar "session end" antes de reiniciar
+
+
+        // Registrar "session end" antes de reiniciar (opcional, si quieres que quede registro también)
         if (metricMgr != null)
         {
             float sessionDuration = Time.time - sessionStartTime;
             metricMgr.LogUsageEvent("SessionEnded", "Restart", sessionDuration.ToString());
         }
+        // Guardar métricas antes de reiniciar la escena
+        if (metricMgr != null)
+        {
+            metricMgr.DumpSessionToFile(); // <-- Aquí se llama para guardar los datos
+        }
 
-        // Aquí puedes agregar la lógica para reiniciar el nivel
-        // Esto recargará la escena actual
-        string currentScene = SceneManager.GetActiveScene().name; // Obtener el nombre de la escena actual
-        SceneManager.LoadScene(currentScene); // Recargar la escena
-
-        // Si hay algún otro comportamiento que quieras al reiniciar el nivel, como resetear variables, se puede agregar aquí
+        // Recargar la escena actual para reiniciar el nivel
+        string currentScene = SceneManager.GetActiveScene().name;
+        SceneManager.LoadScene(currentScene);
     }
+
 
     #endregion
 

@@ -16,9 +16,10 @@ public class CameraRaycast : MonoBehaviour
     private Toggle currentToggle = null;
     private bool isLookingAtToggle = false;
 
-    // Variables para objetos con tag "Toggle2" (ejecutan el botón cada 0.5 seg)
+    // Variables para objetos con tag "Toggle2" (ejecutan el botón cada 0.5 seg)    
+    private const float autoFireInterval = 0.50f;   // cada medio segundo
     private float lookTime2 = 0f;
-    private Button currentButton2 = null;
+    private Toggle currentToggle2 = null;           // ← ¡ahora Toggle!
     private bool isLookingAtToggle2 = false;
 
     private float noHitTimer = 0f;
@@ -77,32 +78,33 @@ public class CameraRaycast : MonoBehaviour
             // y se vuelve a activar cada 0.5 segundos mientras se mantenga la mirada
             else if (hit.collider.gameObject.CompareTag("Toggle2"))
             {
-                Toggle btn = hit.collider.gameObject.GetComponent<Toggle>();
-                if (btn != null)
+                Toggle tgl = hit.collider.GetComponent<Toggle>();
+                if (tgl != null)
                 {
-                    if (currentButton2 != btn)
+                    // Nuevo toggle al que miramos
+                    if (currentToggle2 != tgl)
                     {
-                        btn.isOn = true;
+                        currentToggle2 = tgl;
+                        lookTime2 = 0f;
+                        // ──► Primera ejecución inmediata
+                        tgl.onValueChanged.Invoke(tgl.isOn);
+                    }
+
+                    // Mientras se mantenga la mirada, volver a lanzar el evento
+                    lookTime2 += Time.deltaTime;
+                    if (lookTime2 >= autoFireInterval)
+                    {
+                        tgl.onValueChanged.Invoke(tgl.isOn);
                         lookTime2 = 0f;
                     }
 
-                    lookTime2 += Time.deltaTime;
-                    if (lookTime2 >= 0.7f)
-                    {
-                        btn.isOn = true;  // Ejecuta el botón
-                        lookTime2 = 0f; // Reinicia el temporizador
-                    }
+                    isLookingAtToggle2 = true;
 
-                    isLookingAtToggle2 = true; // Marca que estamos mirando el toggle2
-
-                    // Cambiar el color de la imagen a rojo cuando se está mirando el toggle2
                     if (imageToChangeColor != null)
-                    {
                         imageToChangeColor.color = Color.red;
-                    }
                 }
             }
-            else
+            /*else
             {
                 // Si se mira a otro objeto, reiniciamos ambos estados
                 if (isLookingAtToggle && currentToggle != null && currentToggle.isOn)
@@ -125,7 +127,7 @@ public class CameraRaycast : MonoBehaviour
                 {
                     imageToChangeColor.color = Color.white;
                 }
-            }
+            }*/
         }
         else
         {
@@ -141,7 +143,6 @@ public class CameraRaycast : MonoBehaviour
                 lookTime = 0f;
                 isLookingAtToggle = false;
 
-                currentButton2 = null;
                 lookTime2 = 0f;
                 isLookingAtToggle2 = false;
 
