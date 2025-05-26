@@ -92,8 +92,8 @@ public class MetricsManager : MonoBehaviour, IMetricsManager
         string  playbackTime = rawTime.ToString("F2");
         string  videoName    = _videoService.GetCurrentVideoName();
 
-        LogUsageEvent("VideoEnd",  "Pause_"  + videoName, playbackTime);
-        LogUsageEvent("SessionEnd","Pause",  "0");
+        LogUsageEvent("VideoEnd",  "End_"  + videoName, playbackTime);
+        LogUsageEvent("SessionEnd","End",  "0");
     }
 
     public void ResumeVideo()
@@ -110,32 +110,61 @@ public class MetricsManager : MonoBehaviour, IMetricsManager
         string  playbackTime = rawTime.ToString("F2");
         string  videoName    = _videoService.GetCurrentVideoName();
 
-        LogUsageEvent("SessionStart","Resume","0");
-        LogUsageEvent("VideoStart",  "Resume_" + videoName, playbackTime);
+        LogUsageEvent("SessionStart","Start","0");
+        LogUsageEvent("VideoStart",  "Start_" + videoName, playbackTime);
     }
 
     /* --------------------------------------------------------------------- */
     /*  VOLCADO SESIÓN COMPLETA                                               */
     /* --------------------------------------------------------------------- */
 
-    public void DumpSessionToFile()
+public void DumpSessionToFile()
+{
+    EnsureInitialized();
+    string filePath = Path.Combine(Application.persistentDataPath, currentFilename);
+ 
+    // 1. Prepara el payload actual
+    SessionPayload payload = new SessionPayload
     {
-        EnsureInitialized();
-
-        string filePath = Path.Combine(Application.persistentDataPath, currentFilename);
-
-        SessionPayload payload = new SessionPayload
+        sessionId = sessionId,
+        events = new List<UsageEvent>(eventBuffer)
+    };
+ 
+    // 2. Crea la lista de sesiones (lee el fichero si existe)
+    SessionPayloadList sessionList = new SessionPayloadList();
+ 
+    if (File.Exists(filePath))
+    {
+        string fileContent = File.ReadAllText(filePath).Trim();
+        if (!string.IsNullOrEmpty(fileContent))
         {
-            sessionId = sessionId,
-            events    = eventBuffer
-        };
-
-        string json = JsonUtility.ToJson(payload, true);
-        File.AppendAllText(filePath, json);
-
-        eventBuffer.Clear();
-        Debug.Log($"[Metrics] Sesión volcada a {filePath}");
+            try
+            {
+                // JsonUtility no soporta arrays root, así que lo "envolvemos"
+                sessionList = JsonUtility.FromJson<SessionPayloadList>("{\"sessions\":" + fileContent + "}");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning("[MetricsManager] Error al deserializar métricas existentes, se sobrescribirá: " + ex.Message);
+                sessionList = new SessionPayloadList();
+            }
+        }
     }
+ 
+    // 3. Añade la nueva sesión a la lista
+    sessionList.sessions.Add(payload);
+ 
+    // 4. Serializa todo y elimina el wrapper para dejar solo el array
+    string jsonWithWrapper = JsonUtility.ToJson(sessionList, true);
+    int startIdx = jsonWithWrapper.IndexOf('[');
+    int endIdx = jsonWithWrapper.LastIndexOf(']');
+    string finalJson = jsonWithWrapper.Substring(startIdx, endIdx - startIdx + 1);
+ 
+    File.WriteAllText(filePath, finalJson);
+ 
+    // 5. Limpia el buffer
+    eventBuffer.Clear();
+}
 
     /* -------------------  (Flush periódico deshabilitado) ------------------ */
 }

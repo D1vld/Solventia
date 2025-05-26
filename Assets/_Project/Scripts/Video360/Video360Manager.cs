@@ -8,7 +8,7 @@ using System.Linq;
 using System;
 using UnityEngine.SceneManagement;
 
-public class Video360Manager : MonoBehaviour
+public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 {
     #region Inspector Fields
 
@@ -230,15 +230,23 @@ public class Video360Manager : MonoBehaviour
         sessionStartTime = Time.time;
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("SessionStarted", "Start", "0");
-            metricMgr.LogUsageEvent("UIElementClicked", "SelectLanguage_Spanish", "0");
+            string sessionID = GenerateUniqueSessionID();
+            Debug.Log("Session ID: " + sessionID);
+            metricMgr.LogUsageEvent("SessionStart", "Start", "0");
+            //metricMgr.LogUsageEvent("SessionStarted", "Start", sessionID);
+            metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_Spanish", "0");
         }
         syncManager = FindObjectOfType<SyncManager>();
         
-        //syncManager.StartSync();
+        syncManager.StartSync();
         //PrepareCurrentVideo();
     }
-
+    private string GenerateUniqueSessionID()
+    {
+        // Combina el timestamp actual con un número aleatorio para crear una ID única
+        string sessionID = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "_" + UnityEngine.Random.Range(1000, 9999).ToString();
+        return sessionID;
+    }
     // Se registra SessionEnded al cerrar la aplicación
     private void OnApplicationQuit()
     {
@@ -255,7 +263,7 @@ public class Video360Manager : MonoBehaviour
         string vidQuitName = GetCurrentVideoName();
         string timeVideo = GetCurrentPlaybackTime().ToString();
         metricMgr.LogUsageEvent("VideoEnd", "Quit_" + vidQuitName, timeVideo);
-        metricMgr.LogUsageEvent("SessionEnded", "Quit", "0");
+        metricMgr.LogUsageEvent("SessionEnd", "Quit", "0");
     }
 
     #endregion
@@ -394,7 +402,7 @@ public class Video360Manager : MonoBehaviour
         // MÉTRICA: UIElementClicked para cambiar de video por índice
         if (metricMgr != null)
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "PlayVideoByIndex", "0");
+            metricMgr.LogUsageEvent("UIClicked", "PlayVideoByIndex", "0");
         }
 
         if (index < 0 || index >= videoPaths.Count)
@@ -463,18 +471,18 @@ public class Video360Manager : MonoBehaviour
             string playbackTime = rawTime.ToString("F2");
             // MÉTRICA: Entorno Descargado/Saliente con la duración transcurrida.
             metricMgr.LogUsageEvent("EntornoDescargado", videoName, playbackTime);
-            metricMgr.LogUsageEvent("VideoEnd", "Pause_" +videoName , playbackTime);
+            metricMgr.LogUsageEvent("VideoEnd", "End_" +videoName , playbackTime);
 
             // Se define una tolerancia para considerar el video finalizado.
             float tolerance = 0.1f;
             if (videoPlayer.length > 0 && (videoPlayer.length - videoPlayer.time <= tolerance))
             {
-                metricMgr.LogUsageEvent("EnviromentCompleted", videoName, playbackTime);
+                metricMgr.LogUsageEvent("EnviromentComplete", videoName, playbackTime);
             }
             else
             {
                 float progress = videoPlayer.length > 0 ? (float)(videoPlayer.time / videoPlayer.length * 100.0) : 0f;
-                metricMgr.LogUsageEvent("EnviromentIncompleted", videoName, playbackTime);
+                metricMgr.LogUsageEvent("EnviromentIncomplete", videoName, playbackTime);
             }
             environmentActive = false;
         }
@@ -504,13 +512,14 @@ public class Video360Manager : MonoBehaviour
 
     public void ClickUIVolver()
     {
-        metricMgr.LogUsageEvent("UIElementClicked", "Volver", "0");
+        metricMgr.LogUsageEvent("UIClicked", "Volver", "0");
     }
 
     public void ClickUISalir()
     {
-        metricMgr.LogUsageEvent("UIElementClicked", "Salir", "0");
+        metricMgr.LogUsageEvent("UIClicked", "Salir", "0");
     }
+
 
     public void VideoSkipTime(float time)
     {
@@ -545,11 +554,11 @@ public class Video360Manager : MonoBehaviour
 
         if(isSpanish)
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "SelectLanguage_Spanish", "0");
+            metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_Spanish", "0");
         }
         else
         {
-            metricMgr.LogUsageEvent("UIElementClicked", "SelectLanguage_English", "0");
+            metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_English", "0");
         }
     }
 
@@ -560,7 +569,7 @@ public class Video360Manager : MonoBehaviour
 
         if (metricMgr != null && !string.IsNullOrWhiteSpace(videoName))
         {
-            metricMgr.LogUsageEvent("UIElementClicked", $"SelectVideo_{videoName}", "0");
+            metricMgr.LogUsageEvent("UIClicked", $"SelectVideo_{videoName}", "0");
         }
 
         playFirstVideo = option;
@@ -577,7 +586,7 @@ public class Video360Manager : MonoBehaviour
         if (metricMgr != null)
         {
             float sessionDuration = Time.time - sessionStartTime;
-            metricMgr.LogUsageEvent("SessionEnded", "Restart", sessionDuration.ToString());
+            metricMgr.LogUsageEvent("SessionEnd", "Restart", sessionDuration.ToString());
         }
         // Guardar métricas antes de reiniciar la escena
         if (metricMgr != null)
@@ -720,6 +729,31 @@ public class Video360Manager : MonoBehaviour
             }
             i++; // Avanza al siguiente evento
         }
+    }
+
+    public void Initialize()
+    {
+        throw new NotImplementedException();
+    }
+
+    public bool IsVideoPlaying()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void PlayCurrentVideo()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Play()
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Pause()
+    {
+        throw new NotImplementedException();
     }
 }
 #endregion

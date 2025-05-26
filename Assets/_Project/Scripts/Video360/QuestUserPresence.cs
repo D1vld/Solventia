@@ -94,8 +94,8 @@ public class QuestUserPresence : MonoBehaviour
             videoPlayer.Play();
             Debug.Log("Visor montado: Reanudando el vídeo.");
 
-            metricsManager.LogUsageEvent("SessionStarted", "Resume", "0");
-            metricsManager.LogUsageEvent("VideoStart",   "Resume_" + vidResumeName, timeVideo);
+            metricsManager.LogUsageEvent("SessionStart", "Start", "0");
+            metricsManager.LogUsageEvent("VideoStart",   "Start_" + vidResumeName, timeVideo);
         }
     }
 
@@ -115,8 +115,8 @@ public class QuestUserPresence : MonoBehaviour
             videoPlayer.Pause();
             Debug.Log("Visor desmontado: Vídeo en pausa.");
 
-            metricsManager.LogUsageEvent("VideoEnd",    "Pause_" + vidPauseName, timeVideo);
-            metricsManager.LogUsageEvent("SessionEnded","Pause", "0");
+            metricsManager.LogUsageEvent("VideoEnd",    "End_" + vidPauseName, timeVideo);
+            metricsManager.LogUsageEvent("SessionEnd","End", "0");
         }
     }
 

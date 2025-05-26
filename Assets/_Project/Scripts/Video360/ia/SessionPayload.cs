@@ -5,12 +5,20 @@ using System.Collections.Generic;
 public class SessionPayload
 {
     /// <summary>
-    /// Identificador de la sesión.
+    /// Identificador de la sesiï¿½n.
     /// </summary>
     public string sessionId;
 
     /// <summary>
-    /// Lista de todos los eventos registrados en la sesión.
+    /// Lista de todos los eventos registrados en la sesiï¿½n.
     /// </summary>
     public List<UsageEvent> events;
 }
+public class SessionPayloadList
+
+{
+
+    public List<SessionPayload> sessions = new List<SessionPayload>();
+
+}
+ 
