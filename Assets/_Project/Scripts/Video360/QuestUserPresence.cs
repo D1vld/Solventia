@@ -22,7 +22,6 @@ public class QuestUserPresence : MonoBehaviour
     public bool canPlayVideo = false;
 
     [Header("Managers externos")]
-    [SerializeField] private MetricsManager  metricsManager;
     [SerializeField] private Video360Manager video360Manager;
 
     [Header("Activar GO tras quitar el visor > delay")]
@@ -82,20 +81,11 @@ public class QuestUserPresence : MonoBehaviour
 
         unmountedTime = -1f; // reset
 
-        /* --- 2. Reanudar el vídeo y registrar métricas --- */
-        string vidResumeName = video360Manager.GetCurrentVideoName();
-        float  currentTime   = video360Manager.GetCurrentPlaybackTime();
-
-        float truncatedTime = (float)(Math.Truncate(currentTime * 100.0) / 100.0);
-        string timeVideo    = truncatedTime.ToString("F2", CultureInfo.InvariantCulture);
 
         if (videoPlayer != null && canPlayVideo)
         {
             videoPlayer.Play();
             Debug.Log("Visor montado: Reanudando el vídeo.");
-
-            metricsManager.LogUsageEvent("SessionStart", "Start", "0");
-            metricsManager.LogUsageEvent("VideoStart",   "Start_" + vidResumeName, timeVideo);
         }
     }
 
@@ -103,20 +93,11 @@ public class QuestUserPresence : MonoBehaviour
     private void OnHMDUnmounted()
     {
         unmountedTime = Time.time; // guardamos el momento exacto
-
-        string vidPauseName = video360Manager.GetCurrentVideoName();
-        float  currentTime  = video360Manager.GetCurrentPlaybackTime();
-
-        float truncatedTime = (float)(Math.Truncate(currentTime * 100.0) / 100.0);
-        string timeVideo    = truncatedTime.ToString("F2", CultureInfo.InvariantCulture);
-
+        
         if (videoPlayer != null && videoPlayer.isPlaying)
         {
             videoPlayer.Pause();
-            Debug.Log("Visor desmontado: Vídeo en pausa.");
-
-            metricsManager.LogUsageEvent("VideoEnd",    "End_" + vidPauseName, timeVideo);
-            metricsManager.LogUsageEvent("SessionEnd","End", "0");
+            Debug.Log("Visor desmontado: Vídeo en pausa."); ;
         }
     }
 
