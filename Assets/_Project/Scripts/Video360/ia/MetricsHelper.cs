@@ -20,13 +20,13 @@ public static class MetricsHelper
         string today = DateTime.UtcNow.ToString("yyyyMMdd");
         string key   = $"SessionCount_{today}";
 
-        //int count = PlayerPrefs.GetInt(key, 0) + 1;
-        string randomNumber = UnityEngine.Random.Range(1000, 9999).ToString();
-        //PlayerPrefs.SetInt(key, count);
+        int count = PlayerPrefs.GetInt(key, 0) + 1;
+        //string randomNumber = UnityEngine.Random.Range(1000, 9999).ToString();
+        PlayerPrefs.SetInt(key, count);
         PlayerPrefs.Save();
 
         eventCounter = 0;                         // ← reset
-        return $"{appName}-{today}-{randomNumber}";
+        return $"{appName}-{today}-{count:D3}";
     }
 
     /// <summary>
