@@ -101,6 +101,9 @@ public class SyncManager : MonoBehaviour
             if (fileName.Contains(todayString))
                 continue;
 
+            // Excluir ficheros que NO correspondan a esta app
+            if (!fileName.Contains(MetricsHelper.appName))
+            continue;
             // Leer contenido del fichero
             byte[] fileData;
             try
