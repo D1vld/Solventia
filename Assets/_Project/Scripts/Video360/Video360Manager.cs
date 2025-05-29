@@ -213,8 +213,6 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
     }
     private void Start()
     {
-        
-
         if (materialSkyboxVideo != null)
             SetSkyboxTintColor("#808080");
 
@@ -230,8 +228,8 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
         sessionStartTime = Time.time;
         if (metricMgr != null)
         {
-            string sessionID = GenerateUniqueSessionID();
-            Debug.Log("Session ID: " + sessionID);
+            //string sessionID = GenerateUniqueSessionID();
+            //Debug.Log("Session ID: " + sessionID);
             metricMgr.LogUsageEvent("SessionStart", "Start", "0");
             //metricMgr.LogUsageEvent("SessionStarted", "Start", sessionID);
             metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_Spanish", "0");

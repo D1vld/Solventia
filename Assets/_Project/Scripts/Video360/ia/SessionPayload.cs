@@ -8,11 +8,13 @@ public class SessionPayload
     /// Identificador de la sesi�n.
     /// </summary>
     public string sessionId;
+    public string deviceID;
 
     /// <summary>
     /// Lista de todos los eventos registrados en la sesi�n.
     /// </summary>
     public List<UsageEvent> events;
+    
 }
 public class SessionPayloadList
 

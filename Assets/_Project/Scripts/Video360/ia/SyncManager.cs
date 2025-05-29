@@ -74,10 +74,10 @@ public class SyncManager : MonoBehaviour
         {
             if (Application.internetReachability != NetworkReachability.NotReachable)
             {
-                if (DateTime.UtcNow.Date > lastSuccessfulSyncDate.Date)
-                {
+                //if (DateTime.UtcNow.Date > lastSuccessfulSyncDate.Date)
+                //{
                     yield return StartCoroutine(SyncFiles());
-                }
+                //}
             }
             yield return new WaitForSeconds(retryInterval);
         }
@@ -139,7 +139,7 @@ public class SyncManager : MonoBehaviour
                     try
                     {
                         File.Delete(filePath);
-                        _metricsManager?.LogUsageEvent("SyncFileMetrics", fileName, "0");
+                       // _metricsManager?.LogUsageEvent("SyncFileMetrics", fileName, "0");
                     }
                     catch (Exception ex)
                     {
