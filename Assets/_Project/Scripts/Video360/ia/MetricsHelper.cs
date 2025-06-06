@@ -64,8 +64,9 @@ public static class MetricsHelper
     /// <summary>
     /// Devuelve "metrics_SolventiaYYYY-MM-DD.json" (zona UTC).
     /// </summary>
-    public static string GetCurrentDateFilename()
+    public static string GetCurrentDateFilename(string deviceID)
     {
-        return "metrics_" + appName + DateTime.UtcNow.ToString("yyyy-MM-dd") + ".json";
+        return $"metrics_{appName}_{DateTime.UtcNow:yyyy-MM-dd}_{deviceID}.json";
     }
+ 
 }

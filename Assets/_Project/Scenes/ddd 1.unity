@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 2100000, guid: 8f7a7eee6e2d74242916fd54ed7ea455, type: 2}
+  m_SkyboxMaterial: {fileID: 2100000, guid: 10c05f5efeb83544283ee025707d7466, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -1017,14 +1017,27 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7992930923714128655}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a045e4c19c713a045ac63b406ee84ae3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   videoPlayer: {fileID: 1857803605600538711}
-  videoClips:
-  - {fileID: 32900000, guid: 07bde2cf69220bb499273584acd9537a, type: 3}
+  folderPath: /storage/emulated/0/Movies/360Videos
+  playFirstVideo: 1
+  gameObjectToActivateES: {fileID: 0}
+  gameObjectToActivateEN: {fileID: 0}
+  gameObjectToDesactivateES: {fileID: 0}
+  gameObjectToDesactivateEN: {fileID: 0}
+  panelInteractableES: {fileID: 0}
+  panelInteractableEN: {fileID: 0}
+  menuBajoES: {fileID: 0}
+  menuBajoEN: {fileID: 0}
+  materialSkyboxVideo: {fileID: 0}
+  textMeshPro: {fileID: 0}
+  isSpanish: 1
+  metricMgr: {fileID: 0}
+  syncManager: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

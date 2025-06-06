@@ -59,7 +59,7 @@ public class MetricsManager : MonoBehaviour, IMetricsManager
         deviceID = PlayerPrefs.GetString(Key);
 
         sessionId       = MetricsHelper.GenerateSessionID();
-        currentFilename = MetricsHelper.GetCurrentDateFilename();
+        currentFilename = MetricsHelper.GetCurrentDateFilename(deviceID);
         _videoService   = videoPlaybackServiceComponent as IVideoPlaybackService;
 
         if (_videoService == null)

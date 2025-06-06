@@ -6,15 +6,10 @@ using Oculus.Platform.Models;
 using System.Globalization;
 using System;
 
-/// <summary>
-/// Pausa/reanuda el vídeo según la presencia del usuario
-/// y activa un GameObject si el visor estuvo quitado
-/// más de "delayToActivate" segundos.
-/// </summary>
 public class QuestUserPresence : MonoBehaviour
 {
     /* ------------- Configuración en el Inspector ------------- */
-
+    
     [Header("Video a Pausar/Reanudar")]
     public VideoPlayer videoPlayer;
 
@@ -22,20 +17,18 @@ public class QuestUserPresence : MonoBehaviour
     public bool canPlayVideo = false;
 
     [Header("Managers externos")]
-    [SerializeField] private MetricsManager  metricsManager;
+    [SerializeField] private MetricsManager metricsManager;
     [SerializeField] private Video360Manager video360Manager;
-
-    [Header("Activar GO tras quitar el visor > delay")]
-    [Tooltip("GameObject que se activará al volver a ponerse el visor")]
-    [SerializeField] private GameObject goToActivate;
-
-    [Tooltip("Segundos que el visor debe estar quitado antes de activar el GO")]
-    [SerializeField] [Min(0f)] private float delayToActivate = 5f;
 
     /* ------------- Variables internas ------------- */
 
     /// <summary>Momento en que se desmontó el visor; -1 = sin desmontar.</summary>
     private float unmountedTime = -1f;
+
+    /* ------------- Referencia al GameObject para activar ------------- */
+    
+    [Header("GameObject a Activar")]
+    public GameObject objectToActivate;  // Se asignará desde el Inspector
 
     /* ------------- Ciclo de vida ------------- */
 
@@ -57,6 +50,7 @@ public class QuestUserPresence : MonoBehaviour
             videoPlayer.loopPointReached -= OnVideoFinished;
     }
 
+
     /* ------------- API pública ------------- */
 
     /// <summary>Permite cambiar la bandera desde UI u otros scripts.</summary>
@@ -71,37 +65,26 @@ public class QuestUserPresence : MonoBehaviour
     /// <summary>Llamado automáticamente cuando se coloca de nuevo el visor.</summary>
     private void OnHMDMounted()
     {
-        /* --- 1. Activar el GameObject si procede --- */
-        if (unmountedTime >= 0f &&
-            Time.time - unmountedTime > delayToActivate &&
-            goToActivate != null)
-        {
-            goToActivate.SetActive(true);
-            Debug.Log($"GameObject '{goToActivate.name}' activado tras {Time.time - unmountedTime:F1}s sin visor.");
-        }
-
-        unmountedTime = -1f; // reset
-
-        /* --- 2. Reanudar el vídeo y registrar métricas --- */
-        string vidResumeName = video360Manager.GetCurrentVideoName();
-        float  currentTime   = video360Manager.GetCurrentPlaybackTime();
-
-        float truncatedTime = (float)(Math.Truncate(currentTime * 100.0) / 100.0);
-        string timeVideo    = truncatedTime.ToString("F2", CultureInfo.InvariantCulture);
-
-        if (videoPlayer != null && canPlayVideo)
-        {
-            videoPlayer.Play();
-            Debug.Log("Visor montado: Reanudando el vídeo.");
-
-            metricsManager.LogUsageEvent("SessionStart", "Start", "0");
-            metricsManager.LogUsageEvent("VideoStart",   "Start_" + vidResumeName, timeVideo);
-        }
+        // Lógica para cuando se coloca el visor.
     }
 
     /// <summary>Llamado automáticamente cuando se quita el visor.</summary>
     private void OnHMDUnmounted()
     {
+        // Añadimos más depuración para asegurar que esta función se llama correctamente.
+        Debug.Log("Visor desmontado: OnHMDUnmounted llamado.");
+        
+        // Aquí activamos el GameObject asignado desde el Inspector
+        if (objectToActivate != null)
+        {
+            objectToActivate.SetActive(true);  // Activar el GameObject
+            Debug.Log("GameObject activado.");
+        }
+        else
+        {
+            Debug.LogWarning("No se ha asignado ningún GameObject en el Inspector.");
+        }
+
         unmountedTime = Time.time; // guardamos el momento exacto
 
         string vidPauseName = video360Manager.GetCurrentVideoName();
@@ -116,7 +99,7 @@ public class QuestUserPresence : MonoBehaviour
             Debug.Log("Visor desmontado: Vídeo en pausa.");
 
             metricsManager.LogUsageEvent("VideoEnd",    "End_" + vidPauseName, timeVideo);
-            metricsManager.LogUsageEvent("SessionEnd","End", "0");
+            metricsManager.LogUsageEvent("SessionEnd", "End", "0");
         }
     }
 
