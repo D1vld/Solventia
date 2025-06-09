@@ -144,22 +144,23 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
     private float[] tiemposcedaga = new float[]
     {
         0.8f,     // Piscina
-        20f,      // Aquagym
-        33f,      // Musculo
-        70.5f,    // Boxeo
-        84.3f,    // Pilate
-        100.3f,   // Indoor
-        114f,     // Solarium
-        133f,    // Ludoteca
-        156f,     // Abonados
-        172f,    // Familia        
+        18,      // Aquagym
+        38,      // Musculo
+        75,    // Boxeo
+        96,    // Pilate
+        119,   // Indoor
+        140,     // spiinn
+        156,    // Solarium
+        181,     // Ludoteca
+        202,    // Abonados  
+        230   // Familia   
     };
     private string[] nombresENcedaga = new string[]
     {
         "Semi-Olympic Pool",
         "Instructional & Aquagym Pool",
         "Fitness & Weight Training Room",
-        "Fight Club (Boxing)",
+        "Boxing Zone",
         "Pilates Reformer Studio",
         "Group Training Room (Indoor Activities)",
         "Spinning Studio",
@@ -173,12 +174,12 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
         "Piscina Semiolímpica",
         "Piscina de enseñanza y Aquagym",
         "Sala Fitness/Musculación",
-        "Fight Club (Boxing)",
+        "Zona (Boxing)",
         "Sala Pilates Máquina",
         "Sala Actividades Dirigidas Indoor",
         "Sala Spinning",
-        "Ludoteca",
         "Solarium",
+        "Ludoteca",
         "Vestuarios Abonados",
         "Vestuarios de Familias",
     };
