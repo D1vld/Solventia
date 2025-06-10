@@ -19,7 +19,9 @@ public class CameraRaycast : MonoBehaviour
     private Toggle currentToggle2 = null;
     private bool isLookingAtToggle2 = false;
 
-    void Update ()
+    private bool canInvoke = true;  // New flag to control invocation
+
+    void Update()
     {
         if (camera == null) return;
 
@@ -71,33 +73,39 @@ public class CameraRaycast : MonoBehaviour
                 }
 
                 lookTime2 += Time.deltaTime;
-                if (lookTime2 >= autoFireInterval)
+
+                if (lookTime2 >= autoFireInterval && canInvoke)
                 {
                     tgl.onValueChanged.Invoke(tgl.isOn);
                     lookTime2 = 0f;
+                    canInvoke = false;  // Prevent further invocation
                 }
+            }
 
-                isLookingAtToggle2 = true;
-                if (imageToChangeColor) imageToChangeColor.color = Color.red;
+            // Reset flag when the look time is reset
+            if (lookTime2 < autoFireInterval)
+            {
+                canInvoke = true;  // Allow invocation again once the timer is reset
             }
         }
     }
 
     //-----►  Todo el reseteo en un único sitio
-    void ResetState ()
+    void ResetState()
     {
         if (currentToggle && currentToggle.isOn) currentToggle.isOn = false;
-        currentToggle  = null;
+        currentToggle = null;
         currentToggle2 = null;
 
-        isLookingAtToggle  = false;
+        isLookingAtToggle = false;
         isLookingAtToggle2 = false;
 
-        lookTime  = 0f;
+        lookTime = 0f;
         lookTime2 = 0f;
 
         if (imageToChangeColor) imageToChangeColor.color = Color.white;
     }
+
     bool IsObjectInVisibleArea(GameObject obj)
     {
         RectTransform rectTransform = obj.GetComponent<RectTransform>();
