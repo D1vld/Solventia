@@ -8,108 +8,72 @@ using System.Linq;
 using System;
 using UnityEngine.SceneManagement;
 
+public enum Language
+{
+    Spanish = 0,
+    English = 1,
+    French  = 2,
+    German  = 3
+}
+
 public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 {
-    #region Inspector Fields
+    #region Inspector Fields 
 
-    [Header("Video Player 360")]
-    [Header("Video Player 360")]
+    [Header("Video Player 360")]
     [SerializeField] public VideoPlayer videoPlayer;
 
-    [Header("Carpeta local de los videos 360")]
+    [Header("Carpeta local de los vídeos 360")]
     [SerializeField] private string folderPath = "/storage/emulated/0/Movies/360Videos";
 
-    [Header("Opciones de Video")]
+    [Header("Opciones de vídeo")]
     [SerializeField] private bool playFirstVideo = true;
 
+    /*========= UI por idioma =========*/
     [Header("GameObjects a Activar/Desactivar por Idioma")]
     [SerializeField] private GameObject gameObjectToActivateES;
     [SerializeField] private GameObject gameObjectToActivateEN;
+    [SerializeField] private GameObject gameObjectToActivateFR;
+    [SerializeField] private GameObject gameObjectToActivateDE;
+
     [SerializeField] private GameObject gameObjectToDesactivateES;
     [SerializeField] private GameObject gameObjectToDesactivateEN;
+    [SerializeField] private GameObject gameObjectToDesactivateFR;
+    [SerializeField] private GameObject gameObjectToDesactivateDE;
 
     [Header("Paneles Interactables (Duplicados)")]
     [SerializeField] private GameObject panelInteractableES;
     [SerializeField] private GameObject panelInteractableEN;
+    [SerializeField] private GameObject panelInteractableFR;
+    [SerializeField] private GameObject panelInteractableDE;
 
     [Header("Menús Bajo (Duplicados)")]
     [SerializeField] private GameObject menuBajoES;
     [SerializeField] private GameObject menuBajoEN;
+    [SerializeField] private GameObject menuBajoFR;
+    [SerializeField] private GameObject menuBajoDE;
 
-    [Header("Material del Skybox (Video 360)")]
+    [Header("Material Skybox (Vídeo 360)")]
     [SerializeField] private Material materialSkyboxVideo;
 
-    [Header("Text Mesh Pro")]
+    [Header("Text Mesh Pro")]
     [SerializeField] private TextMeshProUGUI textMeshPro;
 
-    [Header("Idioma")]
-    [SerializeField] private bool isSpanish = true;
+    [Header("Idioma inicial")]
+    [SerializeField] private Language currentLanguage = Language.Spanish;
 
-    // Array de Solventia (28 elementos)
-    private float[] tiempos = new float[]
-    {
-        1f,   // piscina
-        6.7f, // musculo
-        78f,  // calistenia
-        116f, // ocr
-        140.5f, // padel
-        148.5f, // dojo
-        168f, // crossfit
-        183f, // pilate
-        190f, // pole
-        195.8f, // cuerpo
-        202f, // indoor
-        208f, // outdoor
-        217f, // spinnig
-        231f, // hiitarea
-        241f, // personal
-        253f, // tierra
-        261.3f, // rapida
-        268f, // ludoteca
-        276.5f, // baloncesto
-        284f, // futboll
-        291.5f, // Vpis
-        304f, // Vsala
-        310f, // coworking
-        317.5f, // Sparty
-        326.5f, // Cafe
-        340f, // suplementos
-        345f, // fisio
-        354.7f, // arte
+    #endregion
+
+    #region Datos de tiempos y nombres 
+
+    /*――― Solventia ―――*/
+    private readonly float[] tiempos = {
+        1f, 6.7f, 78f, 116f, 140.5f, 148.5f, 168f, 183f, 190f, 195.8f,
+        202f, 208f, 217f, 231f, 241f, 253f, 261.3f, 268f, 276.5f, 284f,
+        291.5f, 304f, 310f, 317.5f, 326.5f, 340f, 345f, 354.7f
     };
-    private string[] nombresEN = new string[]
-    {
-        "Semi-Olympic Pool & Hydrothermal Pool",
-        "Fitness & Weight Training Room",
-        "Calisthenics & Box Area",
-        "OCR Circuit",
-        "Padel Court",
-        "Fight Club (Boxing & Dojo)",
-        "CROSSFIT / HYROX",
-        "Pilates Equipment Studio",
-        "Pole Dance Studio",
-        "Mind-Body Activities Studio",
-        "Indoor Group Exercise Studio",
-        "Outdoor Group Exercise Area",
-        "Spinning & Elliptical Fit Studio",
-        "Hittbox Studio",
-        "Personal Training Studio",
-        "Tennis: Clay Court",
-        "Tennis:Fast Court",
-        "Kids’ Playroom",
-        "3x3 Basketball Court",
-        "Football Pitch",
-        "Pool Changing Rooms",
-        "Studios’ Changing Rooms",
-        "Coworking Area",
-        "“Sparty” Birthday Party Zone",
-        "Cafeteria",
-        "Nutrition Shop",
-        "Physiotherapy Clinic",
-        "Artworks by Daniel Rodríguez Báez"
-    };
-    private string[] nombresES = new string[]
-    {
+
+    private readonly string[] nombresES = {
         "Piscina Semiolímpica y Piscina Hidrotermal",
         "Sala Fitness/Musculación",
         "Calistenia y Box Area",
@@ -128,7 +92,7 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
         "Tenis: Tierra Batida",
         "Tenis: Pista Rápida",
         "Ludoteca",
-        "Basket 3x3",
+        "Basket 3x3",
         "Campo de Fútbol",
         "Vestuarios de Piscina",
         "Vestuarios de Salas",
@@ -137,27 +101,123 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
         "Cafetería",
         "Tienda Nutrición",
         "Clínica Fisioterapia",
-        "Obras de Arte (Artista Daniel Rodríguez Báez)"
+        "Obras de Arte (Artista Daniel Rodríguez Báez)"
     };
 
-    // Array de cedaga (10 elementos)
-    private float[] tiemposcedaga = new float[]
-    {
-        0.8f,     // Piscina
-        18,      // Aquagym
-        38,      // Musculo
-        75,    // Boxeo
-        96,    // Pilate
-        119,   // Indoor
-        140,     // spiinn
-        156,    // Solarium
-        181,     // Ludoteca
-        202,    // Abonados  
-        230   // Familia   
+    private readonly string[] nombresEN = {
+        "Semi‑Olympic Pool & Hydrothermal Pool",
+        "Fitness & Weight Training Room",
+        "Calisthenics & Box Area",
+        "OCR Circuit",
+        "Padel Court",
+        "Fight Club (Boxing & Dojo)",
+        "CROSSFIT / HYROX",
+        "Pilates Equipment Studio",
+        "Pole Dance Studio",
+        "Mind‑Body Activities Studio",
+        "Indoor Group Exercise Studio",
+        "Outdoor Group Exercise Area",
+        "Spinning & Elliptical Fit Studio",
+        "HIITBOX Studio",
+        "Personal Training Studio",
+        "Tennis: Clay Court",
+        "Tennis: Fast Court",
+        "Kids’ Playroom",
+        "3 × 3 Basketball Court",
+        "Football Pitch",
+        "Pool Changing Rooms",
+        "Studios’ Changing Rooms",
+        "Coworking Area",
+        "“Sparty” Birthday Party Zone",
+        "Cafeteria",
+        "Nutrition Shop",
+        "Physiotherapy Clinic",
+        "Artworks by Daniel Rodríguez Báez"
     };
-    private string[] nombresENcedaga = new string[]
-    {
-        "Semi-Olympic Pool",
+
+    private readonly string[] nombresFR = {
+        "Piscine semi‑olympique et piscine d’hydrothérapie",
+        "Salle de fitness & musculation",
+        "Zone Calisthenics & Box",
+        "Parcours OCR",
+        "Terrain de padel",
+        "Fight Club (Boxe & Dojo)",
+        "CROSSFIT / HYROX",
+        "Studio Pilates Reformer",
+        "Studio Pole Dance",
+        "Studio Activités Corps‑Esprit",
+        "Studio d’exercices collectifs Indoor",
+        "Espace d’activités de groupe Outdoor",
+        "Studio Spinning & Elliptical Fit",
+        "Studio HIITBOX",
+        "Studio d’entraînement personnel",
+        "Tennis : Court en terre battue",
+        "Tennis : Court rapide",
+        "Salle de jeux pour enfants",
+        "Terrain de basket 3×3",
+        "Terrain de football",
+        "Vestiaires piscine",
+        "Vestiaires des studios",
+        "Espace Coworking",
+        "Zone anniversaires « Sparty »",
+        "Cafétéria",
+        "Boutique de nutrition",
+        "Clinique de physiothérapie",
+        "Œuvres de Daniel Rodríguez Báez"
+    };
+
+    private readonly string[] nombresDE = {
+        "Halbolympisches Becken & hydrothermales Becken",
+        "Fitness‑ & Krafttrainingsraum",
+        "Calisthenics‑ & Box‑Bereich",
+        "OCR‑Parcours",
+        "Padelplatz",
+        "Fight Club (Boxen & Dojo)",
+        "CROSSFIT / HYROX",
+        "Pilates‑Gerätestudio",
+        "Pole‑Dance‑Studio",
+        "Mind‑Body‑Aktivitäten‑Studio",
+        "Indoor‑Gruppenübungsraum",
+        "Outdoor‑Gruppenbereich",
+        "Spinning‑ & Elliptical‑Fit‑Studio",
+        "HIITBOX‑Studio",
+        "Personal‑Training‑Studio",
+        "Tennis: Sandplatz",
+        "Tennis: Hartplatz",
+        "Kinderspielzimmer",
+        "3×3‑Basketballplatz",
+        "Fußballfeld",
+        "Schwimmbad‑Umkleiden",
+        "Studio‑Umkleiden",
+        "Coworking‑Bereich",
+        "Geburtstagszone „Sparty“",
+        "Cafeteria",
+        "Nahrungsergänzungsshop",
+        "Physiotherapie‑Klinik",
+        "Kunstwerke von Daniel Rodríguez Báez"
+    };
+
+    /*――― Cedaga ―――*/
+    private readonly float[] tiemposCedaga = {
+        0.8f, 18, 38, 75, 96, 119, 140, 156, 181, 202, 230
+    };
+
+    private readonly string[] nombresESCedaga = {
+        "Piscina Semiolímpica",
+        "Piscina de Enseñanza y Aquagym",
+        "Sala Fitness/Musculación",
+        "Zona Boxing",
+        "Sala Pilates Máquina",
+        "Sala Actividades Dirigidas Indoor",
+        "Sala Spinning",
+        "Solarium Exterior",
+        "Ludoteca",
+        "Vestuarios Abonados",
+        "Vestuarios Familias"
+    };
+
+    private readonly string[] nombresENCedaga = {
+        "Semi‑Olympic Pool",
         "Instructional & Aquagym Pool",
         "Fitness & Weight Training Room",
         "Boxing Zone",
@@ -167,42 +227,53 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
         "Outdoor Solarium",
         "Kids’ Playroom",
         "Member Changing Rooms",
-        "Family Changing Rooms",
+        "Family Changing Rooms"
     };
-    private string[] nombresEScedaga = new string[]
-    {
-        "Piscina Semiolímpica",
-        "Piscina de enseñanza y Aquagym",
-        "Sala Fitness/Musculación",
-        "Zona (Boxing)",
-        "Sala Pilates Máquina",
-        "Sala Actividades Dirigidas Indoor",
-        "Sala Spinning",
-        "Solarium",
-        "Ludoteca",
-        "Vestuarios Abonados",
-        "Vestuarios de Familias",
+
+    private readonly string[] nombresFRCedaga = {
+        "Piscine semi‑olympique",
+        "Bassin d’instruction & Aquagym",
+        "Salle de fitness & musculation",
+        "Zone de boxe",
+        "Studio Pilates Reformer",
+        "Salle d’entraînement de groupe (intérieur)",
+        "Studio Spinning",
+        "Solarium extérieur",
+        "Salle de jeux pour enfants",
+        "Vestiaires membres",
+        "Vestiaires familles"
     };
+
+    private readonly string[] nombresDECedaga = {
+        "Halbolympisches Becken",
+        "Lehr‑ & Aquagym‑Becken",
+        "Fitness‑ & Krafttrainingsraum",
+        "Boxbereich",
+        "Pilates‑Reformer‑Studio",
+        "Gruppentrainingsraum (Indoor)",
+        "Spinning‑Studio",
+        "Außen‑Solarium",
+        "Kinderspielzimmer",
+        "Umkleiden Mitglieder",
+        "Umkleiden Familien"
+    };
+
+    #endregion
+
+    #region Métricas y reproducción 
 
     private Coroutine cambioTextoCoroutine;
-
-    #endregion
-
-    #region Private Fields
-
     private int currentVideoIndex = 0;
-    private List<string> videoPaths = new List<string>();
+    private readonly List<string> videoPaths = new();
 
-    // CAMPOS PARA MÉTRICAS
     [SerializeField] private MetricsManager metricMgr;
-    [SerializeField] private SyncManager syncManager;
+    [SerializeField] private SyncManager   syncManager;
     private float sessionStartTime;
-    private float environmentStartTime;
-    private bool environmentActive = false;
+    private bool  environmentActive = false;
 
     #endregion
 
-    #region Unity Lifecycle
+    #region Unity Lifecycle 
 
     void Awake()
     {
@@ -210,186 +281,143 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
             videoPlayer = GetComponent<VideoPlayer>();
 
         videoPlayer.playOnAwake = false;
-        
     }
-    private void Start()
+
+    void Start()
     {
         if (materialSkyboxVideo != null)
             SetSkyboxTintColor("#808080");
 
         LoadAndSortVideos();
 
-        if (videoPaths.Count >= 2)
-            currentVideoIndex = playFirstVideo ? 0 : 1;
-        else if (videoPaths.Count == 1)
-            currentVideoIndex = 0;
+        currentVideoIndex = videoPaths.Count switch
+        {
+            >= 2 => playFirstVideo ? 0 : 1,
+            1    => 0,
+            _    => currentVideoIndex
+        };
 
-        // INTEGRACIÓN DE MÉTRICAS: Obtener MetricsManager y registrar SessionStarted
-        metricMgr = FindObjectOfType<MetricsManager>();
+        metricMgr      = FindObjectOfType<MetricsManager>();
         sessionStartTime = Time.time;
         if (metricMgr != null)
-        {
-            //string sessionID = GenerateUniqueSessionID();
-            //Debug.Log("Session ID: " + sessionID);
             metricMgr.LogUsageEvent("SessionStart", "Start", "0");
-            //metricMgr.LogUsageEvent("SessionStarted", "Start", sessionID);
-            metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_Spanish", "0");
-        }
+
         syncManager = FindObjectOfType<SyncManager>();
-        
         syncManager.StartSync();
-        //PrepareCurrentVideo();
+        //PrepareCurrentVideo();  // ← se llama cuando corresponda
     }
-    private string GenerateUniqueSessionID()
-    {
-        // Combina el timestamp actual con un número aleatorio para crear una ID única
-        string sessionID = DateTime.UtcNow.ToString("yyyyMMddHHmmssfff") + "_" + UnityEngine.Random.Range(1000, 9999).ToString();
-        return sessionID;
-    }
-    // Se registra SessionEnded al cerrar la aplicación
+
     private void OnApplicationQuit()
     {
-        /*if (metricMgr != null)
-        {
-            float sessionDuration = Time.time - sessionStartTime;
-            metricMgr.LogUsageEvent("SessionEnded", "Video360Manager", sessionDuration);
-        }*/
         RecordQuitEvent();
     }
 
     private void RecordQuitEvent()
     {
+        if (metricMgr == null) return;
+
         string vidQuitName = GetCurrentVideoName();
-        string timeVideo = GetCurrentPlaybackTime().ToString();
+        string timeVideo   = GetCurrentPlaybackTime().ToString();
         metricMgr.LogUsageEvent("VideoEnd", "Quit_" + vidQuitName, timeVideo);
         metricMgr.LogUsageEvent("SessionEnd", "Quit", "0");
     }
 
     #endregion
 
-    #region Gestión de Videos (Modo Carpeta)
+    #region Gestión de vídeos (carpeta) 
 
     private void LoadAndSortVideos()
     {
         if (!Directory.Exists(folderPath))
         {
-            Debug.LogWarning("La carpeta no existe: " + folderPath);
+            Debug.LogWarning($"La carpeta no existe: {folderPath}");
             return;
         }
 
         string[] files = Directory.GetFiles(folderPath, "*.mp4");
-
         if (files.Length == 0)
         {
-            Debug.LogError("No se encontraron archivos .mp4 en la carpeta: " + folderPath);
+            Debug.LogError($"No se encontraron .mp4 en la carpeta: {folderPath}");
             return;
         }
 
-        videoPaths = files
-            .OrderBy(path => ExtractLeadingNumber(Path.GetFileNameWithoutExtension(path)))
-            .ToList();
-
-        Debug.Log("Archivos encontrados: " + files.Length);
+        videoPaths.AddRange(
+            files.OrderBy(p => ExtractLeadingNumber(Path.GetFileNameWithoutExtension(p)))
+        );
+        Debug.Log($"Archivos encontrados: {files.Length}");
     }
 
-    private int ExtractLeadingNumber(string fileName)
+    private static int ExtractLeadingNumber(string fileName)
     {
         var parts = fileName.Split('_');
-        if (parts.Length > 0 && int.TryParse(parts[0], out int number))
-            return number;
-        return int.MaxValue;
+        return parts.Length > 0 && int.TryParse(parts[0], out int n) ? n : int.MaxValue;
     }
 
     private void PrepareCurrentVideo()
     {
-        if (videoPaths.Count == 0 || videoPlayer == null)
-            return;
+        if (videoPaths.Count == 0 || videoPlayer == null) return;
 
         string videoUrl = videoPaths[currentVideoIndex];
-
         if (string.IsNullOrEmpty(videoUrl))
         {
-            Debug.LogError("El path del video es NULL o vacío.");
+            Debug.LogError("El path del vídeo es NULL o vacío.");
             return;
         }
 
         videoPlayer.prepareCompleted -= OnVideoPrepared;
         videoPlayer.prepareCompleted += OnVideoPrepared;
-
         videoPlayer.loopPointReached -= OnFolderVideoEnd;
         videoPlayer.loopPointReached += OnFolderVideoEnd;
 
         videoPlayer.url = videoUrl;
         videoPlayer.Prepare();
-
-        Debug.Log("Preparando video: " + Path.GetFileName(videoUrl));
-
+        Debug.Log("Preparando vídeo: " + Path.GetFileName(videoUrl));
         StartCoroutine(CheckAndRetryVideoStartCoroutine());
     }
 
     private void OnVideoPrepared(VideoPlayer vp)
     {
         vp.Play();
-        Debug.Log("Video preparado y reproduciendo: " + Path.GetFileName(vp.url));
+        Debug.Log("Vídeo preparado y reproduciendo: " + Path.GetFileName(vp.url));
 
-        // MÉTRICA: Entorno Cargado
         if (metricMgr != null)
         {
-            string videoName = Path.GetFileName(vp.url);
-            environmentStartTime = Time.time;
+            metricMgr.LogUsageEvent("EntornoCargado", Path.GetFileName(vp.url), "0");
             environmentActive = true;
-            metricMgr.LogUsageEvent("EntornoCargado", videoName, "0");
         }
     }
 
-    private void OnFolderVideoEnd(VideoPlayer vp)
+    private void OnFolderVideoEnd(VideoPlayer _)
     {
         StopVideo();
+        if (playFirstVideo) return;   // salta si era el vídeo de introducción
 
-        if (!playFirstVideo)
-        {
-            if (isSpanish)
-            {
-                if (gameObjectToActivateES != null) gameObjectToActivateES.SetActive(true);
-                if (gameObjectToDesactivateES != null) gameObjectToDesactivateES.SetActive(false);
-            }
-            else
-            {
-                if (gameObjectToActivateEN != null) gameObjectToActivateEN.SetActive(true);
-                if (gameObjectToDesactivateEN != null) gameObjectToDesactivateEN.SetActive(false);
-            }
-        }
+        var (activate, deactivate) = GetActivationPair();
+        if (activate   != null) activate.SetActive(true);
+        if (deactivate != null) deactivate.SetActive(false);
     }
 
     private IEnumerator CheckAndRetryVideoStartCoroutine()
     {
         yield return new WaitForSeconds(2f);
-
         if (!videoPlayer.isPlaying)
         {
-            Debug.LogWarning("El video no comenzó tras 2 segundos. Reintentando...");
+            Debug.LogWarning("El vídeo no comenzó tras 2 s. Reintentando…");
             PrepareCurrentVideo();
         }
     }
 
     #endregion
 
-    #region Métodos de Reproducción
+    #region Reproducción
+    public string GetCurrentVideoName() =>
+        videoPlayer != null && !string.IsNullOrEmpty(videoPlayer.url)
+            ? Path.GetFileName(videoPlayer.url)
+            : null;
 
-    public string GetCurrentVideoName()
-    {
-     if (videoPlayer != null && !string.IsNullOrEmpty(videoPlayer.url))
-    {
-        return Path.GetFileName(videoPlayer.url);
-    }
-    Debug.Log("no sale video");
-    return null; 
-    }
- 
-    public float GetCurrentPlaybackTime()
-    {
-        return videoPlayer != null ? (float)videoPlayer.time : 0f;
-    }
+    public float GetCurrentPlaybackTime() =>
+        videoPlayer != null ? (float)videoPlayer.time : 0f;
+
     private void NextVideo()
     {
         currentVideoIndex = (currentVideoIndex + 1) % videoPaths.Count;
@@ -398,11 +426,8 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     public void PlayVideoByIndex(int index)
     {
-        // MÉTRICA: UIElementClicked para cambiar de video por índice
         if (metricMgr != null)
-        {
             metricMgr.LogUsageEvent("UIClicked", "PlayVideoByIndex", "0");
-        }
 
         if (index < 0 || index >= videoPaths.Count)
         {
@@ -416,229 +441,139 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     #endregion
 
-    #region Métodos de Control y UI
+    #region UI y control 
 
     public void ResumeVideo()
     {
-        // MÉTRICA: UIElementClicked para reanudar video
         if (metricMgr != null)
         {
-            float rawTime = GetCurrentPlaybackTime();
-            string videoName = GetCurrentVideoName();
-            string playbackTime = rawTime.ToString("F2");
-            metricMgr.LogUsageEvent("StartVideo", "StartVideo_" +videoName , playbackTime);
+            metricMgr.LogUsageEvent("StartVideo",
+                "StartVideo_" + GetCurrentVideoName(),
+                GetCurrentPlaybackTime().ToString("F2"));
         }
 
-        if (videoPlayer != null && videoPlayer.isPrepared)
-            videoPlayer.Play();
-
+        if (videoPlayer != null && videoPlayer.isPrepared) videoPlayer.Play();
         RevertCameraToSkybox();
 
-        if (panelInteractableES != null) panelInteractableES.SetActive(false);
-        if (panelInteractableEN != null) panelInteractableEN.SetActive(false);
+        // Oculta paneles interactables
+        SetPanelsInteractable(false);
 
-        // Si playFirstVideo es falso, se desactivan ambos menús bajos
+        // Gestión de menús bajo
         if (!playFirstVideo)
-        {
-            if (menuBajoES != null) menuBajoES.SetActive(false);
-            if (menuBajoEN != null) menuBajoEN.SetActive(false);
-        }
-        else // si playFirstVideo es true, activa según idioma
-        {
-            if (isSpanish)
-            {
-                if (menuBajoES != null) menuBajoES.SetActive(true);
-                if (menuBajoEN != null) menuBajoEN.SetActive(false);
-            }
-            else
-            {
-                if (menuBajoES != null) menuBajoES.SetActive(false);
-                if (menuBajoEN != null) menuBajoEN.SetActive(true);
-            }
-        }
+            SetMenusBajo(false);
+        else
+            SetMenuByLanguage(true);
 
         SetSkyboxTintColor("#808080");
     }
 
     public void StopVideo()
     {
-        // Si se está reproduciendo un entorno, registrar la salida y los eventos de completado/incompleto.
         if (metricMgr != null && environmentActive)
         {
-            float rawTime = GetCurrentPlaybackTime();
             string videoName = GetCurrentVideoName();
-            string playbackTime = rawTime.ToString("F2");
-            // MÉTRICA: Entorno Descargado/Saliente con la duración transcurrida.
-            metricMgr.LogUsageEvent("EntornoDescargado", videoName, playbackTime);
-            metricMgr.LogUsageEvent("VideoEnd", "End_" +videoName , playbackTime);
+            string playback  = GetCurrentPlaybackTime().ToString("F2");
 
-            // Se define una tolerancia para considerar el video finalizado.
-            float tolerance = 0.1f;
-            if (videoPlayer.length > 0 && (videoPlayer.length - videoPlayer.time <= tolerance))
-            {
-                metricMgr.LogUsageEvent("EnviromentComplete", videoName, playbackTime);
-            }
+            metricMgr.LogUsageEvent("EntornoDescargado", videoName, playback);
+            metricMgr.LogUsageEvent("VideoEnd", "End_" + videoName, playback);
+
+            float tol = 0.1f;
+            if (videoPlayer.length > 0 && videoPlayer.length - videoPlayer.time <= tol)
+                metricMgr.LogUsageEvent("EnviromentComplete", videoName, playback);
             else
-            {
-                float progress = videoPlayer.length > 0 ? (float)(videoPlayer.time / videoPlayer.length * 100.0) : 0f;
-                metricMgr.LogUsageEvent("EnviromentIncomplete", videoName, playbackTime);
-            }
+                metricMgr.LogUsageEvent("EnviromentIncomplete", videoName, playback);
+
             environmentActive = false;
         }
 
-        if (videoPlayer != null)
-            videoPlayer.Pause();
-
-        if (textMeshPro != null)
-            textMeshPro.gameObject.SetActive(false);
-
-        if (menuBajoES != null) menuBajoES.SetActive(false);
-        if (menuBajoEN != null) menuBajoEN.SetActive(false);
-
-        if (isSpanish)
-        {
-            if (panelInteractableES != null) panelInteractableES.SetActive(true);
-            if (panelInteractableEN != null) panelInteractableEN.SetActive(false);
-        }
-        else
-        {
-            if (panelInteractableES != null) panelInteractableES.SetActive(false);
-            if (panelInteractableEN != null) panelInteractableEN.SetActive(true);
-        }
-
-        SetCameraToSolidColor("#000000");        
+        videoPlayer?.Pause();
+        textMeshPro?.gameObject.SetActive(false);
+        SetMenusBajo(false);
+        SetPanelsInteractable(true);
+        SetCameraToSolidColor("#000000");
     }
 
-    public void ClickUIVolver()
-    {
-        metricMgr.LogUsageEvent("UIClicked", "Volver", "0");
-    }
+    public void ClickUIVolver() => metricMgr.LogUsageEvent("UIClicked", "Volver", "0");
+    public void ClickUISalir()  => metricMgr.LogUsageEvent("UIClicked", "Salir",  "0");
 
-    public void ClickUISalir()
-    {
-        metricMgr.LogUsageEvent("UIClicked", "Salir", "0");
-    }
-
-
-    public void VideoSkipTime(float time)
-    {
-        if (videoPlayer != null)
-            videoPlayer.time = time;
-    }
-
-    public void StopVideoAfterSeconds(float seconds)
-    {
-        StartCoroutine(StopAfterSecondsCoroutine(seconds));
-    }
-
-    private IEnumerator StopAfterSecondsCoroutine(float seconds)
-    {
-        yield return new WaitForSeconds(seconds);
-        StopVideo();
-        Debug.Log("Video detenido tras " + seconds + " segundos.");
-    }
+    public void VideoSkipTime(float t) => videoPlayer.time = t;
+    public void StopVideoAfterSeconds(float s) => StartCoroutine(StopAfterSecondsCoroutine(s));
+    private IEnumerator StopAfterSecondsCoroutine(float s) { yield return new WaitForSeconds(s); StopVideo(); }
 
     public void ToggleLanguage()
     {
-        // MÉTRICA: UIElementClicked para cambiar idioma
-        if (metricMgr != null)
-        {
-        }
-        isSpanish = !isSpanish;
+        currentLanguage = (Language)(((int)currentLanguage + 1) % 4);
+        metricMgr?.LogUsageEvent("UIClicked", "SelectLanguage_" + currentLanguage, "0");
     }
 
-    public void SetLanguage(bool value)
+    /// <summary>Asigna idioma por índice (0‑3) desde UI.</summary>
+    public void SetLanguage(int langIndex)
     {
-        isSpanish = value;
-
-        if(isSpanish)
-        {
-            metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_Spanish", "0");
-        }
-        else
-        {
-            metricMgr.LogUsageEvent("UIClicked", "SelectLanguage_English", "0");
-        }
+        if (langIndex is < 0 or > 3) return;
+        currentLanguage = (Language)langIndex;
+        metricMgr?.LogUsageEvent("UIClicked", "SelectLanguage_" + currentLanguage, "0");
     }
+
+    /// <summary>Método legacy (mantiene compatibilidad). true=español, false=inglés.</summary>
+    public void SetLanguage(bool value) => SetLanguage(value ? 0 : 1);
 
     public void SetVideoOption(bool option)
     {
-        // MÉTRICA: UIElementClicked para cambiar opción de video
-        string videoName = GetCurrentVideoName();
-
-        if (metricMgr != null && !string.IsNullOrWhiteSpace(videoName))
-        {
-            metricMgr.LogUsageEvent("UIClicked", $"SelectVideo_{videoName}", "0");
-        }
-
-        playFirstVideo = option;
+        playFirstVideo  = option;
         currentVideoIndex = playFirstVideo ? 0 : 1;
+
+        metricMgr?.LogUsageEvent("UIClicked",
+            $"SelectVideo_{GetCurrentVideoName()}", "0");
+
         PrepareCurrentVideo();
     }
 
-
     public void RestartLevel()
     {
-
-
-        // Registrar "session end" antes de reiniciar (opcional, si quieres que quede registro también)
         if (metricMgr != null)
         {
-            float sessionDuration = Time.time - sessionStartTime;
-            metricMgr.LogUsageEvent("SessionEnd", "Restart", sessionDuration.ToString());
+            metricMgr.LogUsageEvent("SessionEnd", "Restart",
+                (Time.time - sessionStartTime).ToString());
+            metricMgr.DumpSessionToFile();
         }
-        // Guardar métricas antes de reiniciar la escena
-        if (metricMgr != null)
-        {
-            metricMgr.DumpSessionToFile(); // <-- Aquí se llama para guardar los datos
-        }
-
-        // Recargar la escena actual para reiniciar el nivel
-        string currentScene = SceneManager.GetActiveScene().name;
-        SceneManager.LoadScene(currentScene);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
-
 
     #endregion
 
-    #region Métodos Skybox y Cámara
+    #region Skybox y cámara 
 
-    private void SetSkyboxTintColor(string hexColor)
+    private void SetSkyboxTintColor(string hex)
     {
         if (materialSkyboxVideo == null) return;
-        if (ColorUtility.TryParseHtmlString(hexColor, out Color color))
-            materialSkyboxVideo.SetColor("_Tint", color);
+        if (ColorUtility.TryParseHtmlString(hex, out Color c))
+            materialSkyboxVideo.SetColor("_Tint", c);
     }
 
-    public void SetCameraToSolidColor(string hexColor)
+    public void SetCameraToSolidColor(string hex)
     {
-        Camera mainCamera = Camera.main;
-        if (mainCamera == null) return;
-
-        mainCamera.clearFlags = CameraClearFlags.SolidColor;
-        if (ColorUtility.TryParseHtmlString(hexColor, out Color color))
+        Camera cam = Camera.main; if (cam == null) return;
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        if (ColorUtility.TryParseHtmlString(hex, out Color c))
         {
-            color.a = 0f;
-            mainCamera.backgroundColor = color;
+            c.a = 0f;
+            cam.backgroundColor = c;
         }
     }
 
     public void RevertCameraToSkybox()
     {
-        Camera mainCamera = Camera.main;
-        if (mainCamera != null)
-            mainCamera.clearFlags = CameraClearFlags.Skybox;
+        Camera cam = Camera.main;
+        if (cam != null) cam.clearFlags = CameraClearFlags.Skybox;
     }
 
     #endregion
 
-    #region Métodos Subtitulos
+    #region Subtítulos 
 
     public void MostrarTextoEnTMP(string texto)
     {
-        if (textMeshPro == null)
-            return;
-
+        if (textMeshPro == null) return;
         textMeshPro.text = texto;
         if (!textMeshPro.gameObject.activeSelf)
             textMeshPro.gameObject.SetActive(true);
@@ -646,113 +581,104 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     public void IniciarCambioTexto()
     {
-        // Si ya hay una coroutine en ejecución, se detiene primero
-        if (cambioTextoCoroutine != null)
-        {
-            StopCoroutine(cambioTextoCoroutine);
-            cambioTextoCoroutine = null;
-        }
+        if (cambioTextoCoroutine != null) StopCoroutine(cambioTextoCoroutine);
 
-        // Reiniciamos el texto
         textMeshPro.text = "";
         textMeshPro.gameObject.SetActive(true);
 
-        // Seleccionamos el array de nombres según el idioma
-        string[] nombresSeleccionados = isSpanish ? nombresES : nombresEN;
-
-        // Iniciamos la coroutine que se encargará de actualizar el texto
-        cambioTextoCoroutine = StartCoroutine(CambiarTextoCoroutine(tiempos, nombresSeleccionados));
+        string[] nombres = GetNamesArray_Solventia();
+        cambioTextoCoroutine = StartCoroutine(
+            CambiarTextoCoroutine(tiempos, nombres));
     }
 
-    private IEnumerator CambiarTextoCoroutine(float[] tiempos, string[] nombres)
+    private IEnumerator CambiarTextoCoroutine(float[] t, string[] nombres)
     {
-        int i = 0;
-        // Mientras queden eventos de cambio
-        while (i < tiempos.Length)
+        for (int i = 0; i < t.Length; i++)
         {
-            // Espera hasta que el tiempo actual del video sea mayor o igual al tiempo objetivo
-            while (videoPlayer.time < tiempos[i])
-            {
-                yield return null; // Espera al siguiente frame
-            }
-
-            // Una vez alcanzado el tiempo, cambia el texto
+            while (videoPlayer.time < t[i]) yield return null;
             MostrarTextoEnTMP(nombres[i]);
-            // MÉTRICA: Se registra el objetivo completado (zona visitada)
-            if (metricMgr != null)
-            {
-                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i],"0"/*lo que diga ia*/);
-            }
-            i++; // Avanza al siguiente evento
+
+            metricMgr?.LogUsageEvent("ObjectiveCompleted", nombres[i], "0");
         }
     }
 
     public void IniciarCambioTextoCedaga()
     {
-        // Si ya hay una coroutine en ejecución, se detiene primero
-        if (cambioTextoCoroutine != null)
-        {
-            StopCoroutine(cambioTextoCoroutine);
-            cambioTextoCoroutine = null;
-        }
+        if (cambioTextoCoroutine != null) StopCoroutine(cambioTextoCoroutine);
 
-        // Reiniciamos el texto
         textMeshPro.text = "";
         textMeshPro.gameObject.SetActive(true);
 
-        // Seleccionamos el array de nombres según el idioma
-        string[] nombresSeleccionados = isSpanish ? nombresEScedaga : nombresENcedaga;
-
-        // Iniciamos la coroutine que se encargará de actualizar el texto
-        cambioTextoCoroutine = StartCoroutine(CambiarTextoCoroutineCedaga(tiemposcedaga, nombresSeleccionados));
+        string[] nombres = GetNamesArray_Cedaga();
+        cambioTextoCoroutine = StartCoroutine(
+            CambiarTextoCoroutine(tiemposCedaga, nombres));
     }
 
-    private IEnumerator CambiarTextoCoroutineCedaga(float[] tiempos, string[] nombres)
+    private string[] GetNamesArray_Solventia() => currentLanguage switch
     {
-        int i = 0;
-        // Mientras queden eventos de cambio
-        while (i < tiempos.Length)
-        {
-            // Espera hasta que el tiempo actual del video sea mayor o igual al tiempo objetivo
-            while (videoPlayer.time < tiempos[i])
-            {
-                yield return null; // Espera al siguiente frame
-            }
+        Language.Spanish => nombresES,
+        Language.English => nombresEN,
+        Language.French  => nombresFR,
+        Language.German  => nombresDE,
+        _ => nombresES
+    };
 
-            // Una vez alcanzado el tiempo, cambia el texto
-            MostrarTextoEnTMP(nombres[i]);
-            // MÉTRICA: Se registra el objetivo completado (zona visitada)
-            if (metricMgr != null)
-            {
-                metricMgr.LogUsageEvent("ObjectiveCompleted", nombres[i], "0"/*lo que diga ia*/);
-            }
-            i++; // Avanza al siguiente evento
-        }
-    }
-
-    public void Initialize()
+    private string[] GetNamesArray_Cedaga() => currentLanguage switch
     {
-        throw new NotImplementedException();
+        Language.Spanish => nombresESCedaga,
+        Language.English => nombresENCedaga,
+        Language.French  => nombresFRCedaga,
+        Language.German  => nombresDECedaga,
+        _ => nombresESCedaga
+    };
+
+    #endregion
+
+    #region Helpers de UI 
+
+    private (GameObject activate, GameObject deactivate) GetActivationPair() => currentLanguage switch
+    {
+        Language.Spanish => (gameObjectToActivateES, gameObjectToDesactivateES),
+        Language.English => (gameObjectToActivateEN, gameObjectToDesactivateEN),
+        Language.French  => (gameObjectToActivateFR, gameObjectToDesactivateFR),
+        Language.German  => (gameObjectToActivateDE, gameObjectToDesactivateDE),
+        _ => (null, null)
+    };
+
+    private (GameObject panelES, GameObject panelEN, GameObject panelFR, GameObject panelDE) GetPanels()
+        => (panelInteractableES, panelInteractableEN, panelInteractableFR, panelInteractableDE);
+
+    private (GameObject es, GameObject en, GameObject fr, GameObject de) GetMenus()
+        => (menuBajoES, menuBajoEN, menuBajoFR, menuBajoDE);
+
+    private void SetPanelsInteractable(bool state)
+    {
+        var (es, en, fr, de) = GetPanels();
+        es?.SetActive(state && currentLanguage == Language.Spanish);
+        en?.SetActive(state && currentLanguage == Language.English);
+        fr?.SetActive(state && currentLanguage == Language.French);
+        de?.SetActive(state && currentLanguage == Language.German);
     }
 
-    public bool IsVideoPlaying()
+    private void SetMenusBajo(bool state)
     {
-        throw new NotImplementedException();
+        var (es, en, fr, de) = GetMenus();
+        es?.SetActive(state && currentLanguage == Language.Spanish);
+        en?.SetActive(state && currentLanguage == Language.English);
+        fr?.SetActive(state && currentLanguage == Language.French);
+        de?.SetActive(state && currentLanguage == Language.German);
     }
 
-    public void PlayCurrentVideo()
-    {
-        throw new NotImplementedException();
-    }
+    private void SetMenuByLanguage(bool active) => SetMenusBajo(active);
 
-    public void Play()
-    {
-        throw new NotImplementedException();
-    }
+    #endregion
 
-    public void Pause()
-    {
-        throw new NotImplementedException();
-    }
+    #region Interface IVideoPlaybackService 
+
+    public void Initialize()               => throw new NotImplementedException();
+    public bool  IsVideoPlaying()          => throw new NotImplementedException();
+    public void  PlayCurrentVideo()        => throw new NotImplementedException();
+    public void  Play()                    => throw new NotImplementedException();
+    public void  Pause()                   => throw new NotImplementedException();
+    #endregion
 }
-#endregion

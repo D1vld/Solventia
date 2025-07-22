@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: TWD
-  productName: pruena
+  productName: Solventia
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -147,8 +147,6 @@ PlayerSettings:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 11400000, guid: e46ab31bc223d6541a1e6ff8e595f229, type: 2}
-  - {fileID: 11400000, guid: 5237db3d22bad374cb0d7eb9a68eb6e5, type: 2}
-  - {fileID: 1360999495888191763, guid: a2ca941483f191643b4e13ca7ad3faf4, type: 2}
   metroInputSource: 0
   wsaTransparentSwapchain: 0
   m_HolographicPauseOnTrackingLoss: 1
@@ -169,7 +167,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.TWD.pruena
+    Android: com.TWD.Solventia
     Standalone: com.TWD.Plantilla360-Examples
   buildNumber:
     Standalone: 0
