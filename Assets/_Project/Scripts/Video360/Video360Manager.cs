@@ -5,6 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using UnityEngine.Android;
+#endif
 
 public class Video360Manager : MonoBehaviour
 {
@@ -65,17 +68,35 @@ public class Video360Manager : MonoBehaviour
 
     private void Start()
     {
-        if (materialSkyboxVideo != null) SetSkyboxTintColor("#808080");
+        StartCoroutine(RequestPermsThenLoad());
+    }
 
+    private IEnumerator RequestPermsThenLoad()
+    {
+    #if UNITY_ANDROID && !UNITY_EDITOR
+        // Android 13+: READ_MEDIA_VIDEO
+        if (!Permission.HasUserAuthorizedPermission("android.permission.READ_MEDIA_VIDEO"))
+            Permission.RequestUserPermission("android.permission.READ_MEDIA_VIDEO");
+
+        // Android 12L-: READ_EXTERNAL_STORAGE
+        if (!Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead))
+            Permission.RequestUserPermission(Permission.ExternalStorageRead);
+
+        // Espera breve a la respuesta del usuario (máx. 5 s)
+        float t = 0f;
+        while (!(Permission.HasUserAuthorizedPermission("android.permission.READ_MEDIA_VIDEO") ||
+                Permission.HasUserAuthorizedPermission(Permission.ExternalStorageRead)) && t < 5f)
+        {
+            t += Time.deltaTime;
+            yield return null;
+        }
+    #endif
+
+        // Ya con permisos (o en Editor/otras plataformas)
         LoadAndSortVideos();
-
-        if (videoPaths.Count >= 2)       currentVideoIndex = playFirstVideo ? 0 : 1;
-        else if (videoPaths.Count == 1)  currentVideoIndex = 0;
-
-        // Aseguramos fragmentos ordenados
-        fragmentos = fragmentos.OrderBy(f => f.inicio).ToList();
-
         PrepareCurrentVideo();
+
+        yield break; // <- asegura que TODAS las rutas de ejecución “yieldean”
     }
 
     private void Update()
