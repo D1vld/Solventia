@@ -17,6 +17,9 @@ public class Video360Manager : MonoBehaviour
     [Header("Video Player 360")]
     [SerializeField] private VideoPlayer videoPlayer;
 
+    [Header("Búsqueda por nombre")]
+    [SerializeField] private string targetFileName = "Scala-Video.mp4";
+
     [Header("Carpeta local de los vídeos 360")]
     [SerializeField] private string folderPath = "/storage/emulated/0/Movies/360Videos";
 
@@ -93,10 +96,34 @@ public class Video360Manager : MonoBehaviour
     #endif
 
         // Ya con permisos (o en Editor/otras plataformas)
-        LoadAndSortVideos();
-        PrepareCurrentVideo();
+        videoPaths.Clear();
 
-        yield break; // <- asegura que TODAS las rutas de ejecución “yieldean”
+        // 1) Intentar encontrar el vídeo exacto en TODO el almacenamiento
+        string found = FindVideoByNameGlobal(targetFileName);
+
+        // 2) Si se encontró, usarlo y actualizar folderPath
+        if (!string.IsNullOrEmpty(found))
+        {
+            // ★ MOD: reflejar la carpeta del vídeo encontrado en 'folderPath'
+            string dir = Path.GetDirectoryName(found);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                folderPath = dir;
+                Debug.Log($"[Video360Manager] target encontrado. folderPath => {folderPath}");
+            }
+
+            // ★ MOD: reproducir directamente ese vídeo
+            videoPaths = new List<string> { found };
+            currentVideoIndex = 0;
+        }
+        else
+        {
+            Debug.LogWarning($"No se encontró {targetFileName} globalmente. Buscando en carpeta: {folderPath}");
+            LoadAndSortVideos(); // listado por carpeta configurada
+        }
+
+        PrepareCurrentVideo();
+        yield break;
     }
 
     private void Update()
@@ -126,7 +153,7 @@ public class Video360Manager : MonoBehaviour
 
     /*================================================================*/
     #region CARGA Y PREPARACIÓN DE VÍDEOS 
-        private void LoadAndSortVideos()
+    private void LoadAndSortVideos()
     {
         if (!Directory.Exists(folderPath))
         {
@@ -182,8 +209,86 @@ public class Video360Manager : MonoBehaviour
 
         if (!playFirstVideo)
         {
-            if (objectToActivate)   objectToActivate.SetActive(true);
+            if (objectToActivate) objectToActivate.SetActive(true);
             if (objectToDeactivate) objectToDeactivate.SetActive(false);
+        }
+    }
+    
+    // Busca un archivo por nombre exacto recorriendo varias raíces típicas del casco.
+    // Devuelve la ruta completa si lo encuentra; null en caso contrario.
+    private string FindVideoByNameGlobal(string fileName)
+    {
+        if (string.IsNullOrEmpty(fileName)) return null;
+
+        // Raíces comunes en Android/visores (emuladas en Editor también)
+        var candidateRoots = new List<string>();
+
+    #if UNITY_ANDROID && !UNITY_EDITOR
+        candidateRoots.Add("/storage/emulated/0"); // principal
+        candidateRoots.Add("/sdcard");
+        candidateRoots.Add("/storage");            // contiene subcarpetas por UUID
+    #else
+        // En Editor/otras plataformas: busca también en la carpeta configurada
+        if (!string.IsNullOrEmpty(folderPath)) candidateRoots.Add(folderPath);
+    #endif
+
+        foreach (var root in candidateRoots)
+        {
+            var path = SafeFindInRoot(root, fileName);
+            if (!string.IsNullOrEmpty(path)) return path;
+        }
+
+        return null;
+    }
+
+    /// Recorre un root concreto buscando el archivo exacto (case-insensitive).
+    private string SafeFindInRoot(string root, string fileName)
+    {
+        try
+        {
+            if (!Directory.Exists(root)) return null;
+
+            // Limitamos a mp4 para no recorrerlo todo: rendimiento
+            var files = Directory.EnumerateFiles(root, "*.mp4", SearchOption.AllDirectories);
+            string targetLower = fileName.ToLowerInvariant();
+
+            foreach (var f in files)
+            {
+                // Compara por nombre exacto (sin ruta)
+                if (Path.GetFileName(f).ToLowerInvariant() == targetLower)
+                    return f;
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.Log($"[Video360Manager] Sin acceso a: {root} ({e.Message})");
+        }
+        return null;
+    }
+
+    // ★ MOD: método público para relanzar la búsqueda y actualizar folderPath si aparece el target
+    public void RescanAndSetFolderFromTarget()
+    {
+        string found = FindVideoByNameGlobal(targetFileName);
+        if (!string.IsNullOrEmpty(found))
+        {
+            string dir = Path.GetDirectoryName(found);
+            if (!string.IsNullOrEmpty(dir))
+            {
+                folderPath = dir;
+                Debug.Log($"[Video360Manager] Rescan OK. folderPath => {folderPath}");
+            }
+
+            videoPaths = new List<string> { found };
+            currentVideoIndex = 0;
+            PrepareCurrentVideo();
+        }
+        else
+        {
+            Debug.LogWarning($"[Video360Manager] Rescan: no se encontró {targetFileName}. " +
+                             $"Se mantiene folderPath => {folderPath}");
+            LoadAndSortVideos();
+            PrepareCurrentVideo();
         }
     }
     #endregion
