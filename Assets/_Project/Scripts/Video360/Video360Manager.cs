@@ -263,6 +263,7 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
     #region Métricas y reproducción 
 
     private Coroutine cambioTextoCoroutine;
+    private bool videoUnavailableMessageVisible;
     private int currentVideoIndex = 0;
     private readonly List<string> videoPaths = new();
 
@@ -303,7 +304,7 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
             metricMgr.LogUsageEvent("SessionStart", "Start", "0");
 
         syncManager = FindObjectOfType<SyncManager>();
-        syncManager.StartSync();
+        if (syncManager != null) syncManager.StartSync();
         //PrepareCurrentVideo();  // ← se llama cuando corresponda
     }
 
@@ -328,23 +329,13 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     private void LoadAndSortVideos()
     {
-        if (!Directory.Exists(folderPath))
-        {
-            Debug.LogWarning($"La carpeta no existe: {folderPath}");
-            return;
-        }
-
-        string[] files = Directory.GetFiles(folderPath, "*.mp4");
-        if (files.Length == 0)
-        {
-            Debug.LogError($"No se encontraron .mp4 en la carpeta: {folderPath}");
-            return;
-        }
-
-        videoPaths.AddRange(
-            files.OrderBy(p => ExtractLeadingNumber(Path.GetFileNameWithoutExtension(p)))
-        );
-        Debug.Log($"Archivos encontrados: {files.Length}");
+        videoPaths.Clear();
+        videoPaths.AddRange(SolventiaVideoLocator.Find(new[] {
+            "/storage/emulated/0/Managed files",
+            folderPath,
+            "/storage/emulated/0/Movies/360Videos",
+            "/storage/emulated/0/Movies"
+        }));
     }
 
     private static int ExtractLeadingNumber(string fileName)
@@ -355,7 +346,21 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     private void PrepareCurrentVideo()
     {
-        if (videoPaths.Count == 0 || videoPlayer == null) return;
+        if (videoPlayer == null) return;
+        LoadAndSortVideos();
+        if (currentVideoIndex < 0 || currentVideoIndex >= videoPaths.Count || string.IsNullOrEmpty(videoPaths[currentVideoIndex]))
+        {
+            Debug.LogWarning("El vídeo seleccionado todavía no está disponible. Comprueba la descarga en Device Manager.");
+            MostrarTextoEnTMP("El vídeo todavía no está disponible. Comprueba la descarga y vuelve a intentarlo.");
+            videoUnavailableMessageVisible = textMeshPro != null;
+            return;
+        }
+
+        if (videoUnavailableMessageVisible && textMeshPro != null)
+        {
+            textMeshPro.gameObject.SetActive(false);
+            videoUnavailableMessageVisible = false;
+        }
 
         string videoUrl = videoPaths[currentVideoIndex];
         if (string.IsNullOrEmpty(videoUrl))
@@ -372,7 +377,6 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
         videoPlayer.url = videoUrl;
         videoPlayer.Prepare();
         Debug.Log("Preparando vídeo: " + Path.GetFileName(videoUrl));
-        StartCoroutine(CheckAndRetryVideoStartCoroutine());
     }
 
     private void OnVideoPrepared(VideoPlayer vp)
