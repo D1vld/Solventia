@@ -291,12 +291,10 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
         LoadAndSortVideos();
 
-        currentVideoIndex = videoPaths.Count switch
-        {
-            >= 2 => playFirstVideo ? 0 : 1,
-            1    => 0,
-            _    => currentVideoIndex
-        };
+        // playFirstVideo true = Visita por espacios; false = Visita completa
+        currentVideoIndex = playFirstVideo
+            ? SolventiaVideoLocator.IndexOf(SolventiaVideoLocator.EspaciosFile)
+            : SolventiaVideoLocator.IndexOf(SolventiaVideoLocator.CompletoFile);
 
         metricMgr      = FindObjectOfType<MetricsManager>();
         sessionStartTime = Time.time;
@@ -327,15 +325,21 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     #region Gestión de vídeos (carpeta) 
 
+    private IEnumerable<string> VideoSearchDirectories() =>
+        SolventiaVideoLocator.Directories(folderPath);
+
     private void LoadAndSortVideos()
     {
         videoPaths.Clear();
-        videoPaths.AddRange(SolventiaVideoLocator.Find(new[] {
-            "/storage/emulated/0/Managed files",
-            folderPath,
-            "/storage/emulated/0/Movies/360Videos",
-            "/storage/emulated/0/Movies"
-        }));
+        videoPaths.AddRange(SolventiaVideoLocator.FindAll(VideoSearchDirectories()));
+    }
+
+    private void ReportVideoMissing(string expectedName)
+    {
+        var folders = string.Join(", ", VideoSearchDirectories());
+        Debug.LogError($"No se encontró el vídeo '{expectedName}'. Carpetas buscadas: {folders}");
+        MostrarTextoEnTMP("El vídeo todavía no está disponible. Comprueba la descarga y vuelve a intentarlo.");
+        videoUnavailableMessageVisible = textMeshPro != null;
     }
 
     private static int ExtractLeadingNumber(string fileName)
@@ -348,11 +352,17 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
     {
         if (videoPlayer == null) return;
         LoadAndSortVideos();
-        if (currentVideoIndex < 0 || currentVideoIndex >= videoPaths.Count || string.IsNullOrEmpty(videoPaths[currentVideoIndex]))
+
+        string expectedName = SolventiaVideoLocator.NameAt(currentVideoIndex);
+        string videoUrl = expectedName != null
+            ? SolventiaVideoLocator.Find(expectedName, VideoSearchDirectories())
+            : (currentVideoIndex >= 0 && currentVideoIndex < videoPaths.Count
+                ? videoPaths[currentVideoIndex]
+                : null);
+
+        if (string.IsNullOrEmpty(videoUrl))
         {
-            Debug.LogWarning("El vídeo seleccionado todavía no está disponible. Comprueba la descarga en Device Manager.");
-            MostrarTextoEnTMP("El vídeo todavía no está disponible. Comprueba la descarga y vuelve a intentarlo.");
-            videoUnavailableMessageVisible = textMeshPro != null;
+            ReportVideoMissing(expectedName ?? "el vídeo seleccionado");
             return;
         }
 
@@ -362,13 +372,6 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
             videoUnavailableMessageVisible = false;
         }
 
-        string videoUrl = videoPaths[currentVideoIndex];
-        if (string.IsNullOrEmpty(videoUrl))
-        {
-            Debug.LogError("El path del vídeo es NULL o vacío.");
-            return;
-        }
-
         videoPlayer.prepareCompleted -= OnVideoPrepared;
         videoPlayer.prepareCompleted += OnVideoPrepared;
         videoPlayer.loopPointReached -= OnFolderVideoEnd;
@@ -376,7 +379,7 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
         videoPlayer.url = videoUrl;
         videoPlayer.Prepare();
-        Debug.Log("Preparando vídeo: " + Path.GetFileName(videoUrl));
+        Debug.Log("Preparando vídeo: " + Path.GetFileName(videoUrl) + " (" + videoUrl + ")");
     }
 
     private void OnVideoPrepared(VideoPlayer vp)
@@ -523,11 +526,15 @@ public class Video360Manager : MonoBehaviour, IVideoPlaybackService
 
     public void SetVideoOption(bool option)
     {
-        playFirstVideo  = option;
-        currentVideoIndex = playFirstVideo ? 0 : 1;
+        // true = Visita por espacios; false = Visita completa
+        playFirstVideo = option;
+        string fileName = option
+            ? SolventiaVideoLocator.EspaciosFile
+            : SolventiaVideoLocator.CompletoFile;
+        currentVideoIndex = SolventiaVideoLocator.IndexOf(fileName);
 
         metricMgr?.LogUsageEvent("UIClicked",
-            $"SelectVideo_{GetCurrentVideoName()}", "0");
+            $"SelectVideo_{fileName}", "0");
 
         PrepareCurrentVideo();
     }
